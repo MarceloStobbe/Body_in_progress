@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Sleep & Recovery Monitor{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-4 pb-2">
+    <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2 shadow-sm" style="width: 70px; height: 70px; background-color: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-color);">
+                <i class="bi bi-moon-stars-fill fs-2" style="color: var(--accent-color);"></i>
+            </div>
+            <h3 class="fw-bold theme-text-title mb-1">Sleep & Recovery Monitor</h3>
+            <p class="small theme-text-sub">Configure your target sleep hours, check-in schedules, and track your weekly recovery performance.</p>
+        </div>
+
+        <div id="sleepConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1 theme-text-title"><i class="bi bi-sliders me-2" style="color: var(--accent-color);"></i>Sleep Configuration Hub</h6>
+                    <span class="small theme-text-sub">Set your target daily sleep hours, reminder schedule, and closing check-in time.</span>
+                </div>
+                <div class="form-check form-switch fs-4">
+                    <input class="form-check-input custom-accent-switch" type="checkbox" role="switch" id="sleepHubOptIn" onchange="toggleSleepContainer(this)">
+                </div>
+            </div>
+
+            <div id="sleepHubContent" class="d-none pt-2">
+                
+                <div class="mb-4" style="max-width: 300px;">
+                    <label class="small fw-bold theme-text-title mb-1">Target Daily Sleep Hours</label>
+                    <span class="small theme-text-sub d-block text-nowrap mb-1">Select your desired hours of sleep for the day.</span>
+                    <select id="dailySleepTargetSelect" class="form-select border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    </select>
+                </div>
+
+                <div class="mb-4" style="max-width: 300px;">
+                    <label class="small fw-bold theme-text-title mb-1">Check-in Closing Time</label>
+                    <span class="small theme-text-sub d-block text-nowrap mb-1">Set the time to log sleep hours and how you woke up (Optional).</span>
+                    <select id="dailyCheckSelect" class="form-select border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        <option value="" selected>Select check-in time...</option>
+                        <option value="12:00 AM">12:00 AM</option><option value="01:00 AM">01:00 AM</option>
+                        <option value="02:00 AM">02:00 AM</option><option value="03:00 AM">03:00 AM</option>
+                        <option value="04:00 AM">04:00 AM</option><option value="05:00 AM">05:00 AM</option>
+                        <option value="06:00 AM">06:00 AM</option><option value="07:00 AM">07:00 AM</option>
+                        <option value="08:00 AM">08:00 AM</option><option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option><option value="11:00 AM">11:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option><option value="01:00 PM">01:00 PM</option>
+                        <option value="02:00 PM">02:00 PM</option><option value="03:00 PM">03:00 PM</option>
+                        <option value="04:00 PM">04:00 PM</option><option value="05:00 PM">05:00 PM</option>
+                        <option value="06:00 PM">06:00 PM</option><option value="07:00 PM">07:00 PM</option>
+                        <option value="08:00 PM">08:00 PM</option><option value="09:00 PM">09:00 PM</option>
+                        <option value="10:00 PM">10:00 PM</option><option value="11:00 PM">11:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn px-5 py-2 fw-bold rounded-pill shadow" onclick="saveSleepConfiguration()" style="background-color: var(--accent-color); color: #111;">
+                        Save Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sleepIntakeContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-plus-circle me-2" style="color: var(--accent-color);"></i>Log Sleep & Morning Status</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="openSleepConfigurationHub()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+            <div class="row g-3 align-items-center justify-content-center">
+                <div class="col-md-6">
+                    <label class="small fw-bold theme-text-title mb-1">Hours Slept</label>
+                    <select id="sleepLogInput" class="form-select border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="small fw-bold theme-text-title mb-1">How did you wake up?</label>
+                    <select id="wakeStatusSelect" class="form-select border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
+                        <option value="Rested & Good">Rested & Good (Good)</option>
+                        <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
+                        <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
+                    </select>
+                </div>
+                <div class="col-12 text-center mt-3">
+                    <button class="btn fw-bold px-5 py-2 rounded-pill shadow" type="button" onclick="logSleepIntake()" style="background-color: var(--accent-color); color: #111;">
+                        Save Sleep Record
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sleepDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up-arrow me-2" style="color: var(--accent-color);"></i>Today's Sleep Progress</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="openSleepConfigurationHub()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+
+            <div class="mb-4 p-3 rounded-3 theme-box-toggle border border-secondary">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                    <span class="small theme-text-sub fw-bold">Slept: 
+                        <span id="sleepConsumedDisplay" class="theme-text-title">0 hrs</span>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-underline p-0 ms-2" onclick="enableEditSleep()" style="color: var(--accent-color); font-size: 0.85rem;">Edit</button>
+                    </span>
+                    <span class="small theme-text-sub fw-bold">Status: 
+                        <span id="wakeStatusDisplay" style="color: var(--accent-color);">Not logged</span>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-underline p-0 ms-2" onclick="enableEditStatus()" style="color: var(--accent-color); font-size: 0.85rem;">Edit</button>
+                    </span>
+                    <span class="small theme-text-sub fw-bold">Target Goal: <span id="sleepTargetGoalDisplay" class="theme-text-title">0 hrs</span></span>
+                </div>
+
+                <div id="editSleepContainer" class="input-group input-group-sm mb-3 d-none" style="max-width: 250px;">
+                    <select id="editSleepInput" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    </select>
+                    <button class="btn btn-sm fw-bold px-3" type="button" onclick="saveEditedSleep()" style="background-color: var(--accent-color); color: #111;">Save</button>
+                </div>
+
+                <div id="editStatusContainer" class="input-group input-group-sm mb-3 d-none" style="max-width: 320px;">
+                    <select id="editStatusSelect" class="form-select form-select-sm custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
+                        <option value="Rested & Good">Rested & Good (Good)</option>
+                        <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
+                        <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
+                    </select>
+                    <button class="btn btn-sm fw-bold px-3" type="button" onclick="saveEditedStatus()" style="background-color: var(--accent-color); color: #111;">Save</button>
+                </div>
+
+                <div class="progress" style="height: 18px; background-color: rgba(255,255,255,0.1); border-radius: 9px; overflow: hidden;">
+                    <div id="sleepProgressBar" class="progress-bar" role="progressbar" style="width: 0%; background-color: var(--accent-color); transition: width 0.4s ease;"></div>
+                </div>
+                <div class="text-center mt-2">
+                    <span id="sleepPercentageText" class="small fw-bold" style="color: var(--accent-color);">0% of target sleep reached</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="sleepHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-moon-stars me-2" style="color: var(--accent-color);"></i>7-Day Sleep Duration Trend (Oura Style)</h5>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                
+                <div class="d-flex" style="height: 240px;">
+                    <div class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold" style="width: 40px; font-size: 0.75rem; height: 200px; border-right: 1px solid rgba(255,255,255,0.2);">
+                        <span>12h</span>
+                        <span>10h</span>
+                        <span>8h</span>
+                        <span>6h</span>
+                        <span>4h</span>
+                        <span>0h</span>
+                    </div>
+
+                    <div class="position-relative flex-grow-1" style="height: 240px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 200px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+
+                        <svg id="sleepTrendSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 240" preserveAspectRatio="none">
+                            <polyline id="sleepTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="50,80 150,100 250,70 350,90 450,60 550,80 650,120" />
+                            
+                            <circle cx="50" cy="80" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText0" x="50" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.2h</text>
+                            <text id="sleepDayLabel0" x="50" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">7</text>
+
+                            <circle cx="150" cy="100" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText1" x="150" y="88" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">6.5h</text>
+                            <text id="sleepDayLabel1" x="150" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">8</text>
+
+                            <circle cx="250" cy="70" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText2" x="250" y="58" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.8h</text>
+                            <text id="sleepDayLabel2" x="250" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">9</text>
+
+                            <circle cx="350" cy="90" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText3" x="350" y="78" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.0h</text>
+                            <text id="sleepDayLabel3" x="350" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">10</text>
+
+                            <circle cx="450" cy="60" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText4" x="450" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">8.5h</text>
+                            <text id="sleepDayLabel4" x="450" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">11</text>
+
+                            <circle cx="550" cy="80" r="5" fill="var(--accent-color)" />
+                            <text id="sleepPointText5" x="550" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.2h</text>
+                            <text id="sleepDayLabel5" x="550" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">12</text>
+
+                            <circle id="sleepTodayCircle" cx="650" cy="120" r="6" fill="var(--bg-card, #1e1e1e)" stroke="var(--accent-color)" stroke-width="3" />
+                            <text id="sleepTodayText" x="650" y="108" fill="var(--accent-color)" font-size="11" font-weight="bold" text-anchor="middle">0.0h</text>
+                            <text id="sleepDayLabel6" x="650" y="225" fill="var(--accent-color)" font-size="12" font-weight="bold" text-anchor="middle">Today</text>
+                        </svg>
+
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="small theme-text-sub mb-1">7-day average sleep duration: <strong class="theme-text-title" id="avgSleepText">7.4 hrs</strong></p>
+                    <div id="sleepDurationMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Consistent sleep duration maintained throughout the week!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sleepQualityHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-activity me-2" style="color: var(--accent-color);"></i>7-Day Sleep Quality & Recovery Trend (Oura Style)</h5>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                
+                <div class="d-flex" style="height: 240px;">
+                    <div class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold" style="width: 45px; font-size: 0.75rem; height: 200px; border-right: 1px solid rgba(255,255,255,0.2);">
+                        <span>100%</span>
+                        <span>80%</span>
+                        <span>60%</span>
+                        <span>40%</span>
+                        <span>20%</span>
+                        <span>0%</span>
+                    </div>
+
+                    <div class="position-relative flex-grow-1" style="height: 240px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 200px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+
+                        <svg id="qualityTrendSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 240" preserveAspectRatio="none">
+                            <polyline id="qualityTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="50,60 150,80 250,50 350,70 450,40 550,60 650,100" />
+                            
+                            <circle cx="50" cy="60" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText0" x="50" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">85%</text>
+                            <text id="qualDayLabel0" x="50" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">7</text>
+
+                            <circle cx="150" cy="80" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText1" x="150" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">75%</text>
+                            <text id="qualDayLabel1" x="150" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">8</text>
+
+                            <circle cx="250" cy="50" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText2" x="250" y="38" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">90%</text>
+                            <text id="qualDayLabel2" x="250" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">9</text>
+
+                            <circle cx="350" cy="70" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText3" x="350" y="58" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">80%</text>
+                            <text id="qualDayLabel3" x="350" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">10</text>
+
+                            <circle cx="450" cy="40" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText4" x="450" y="28" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">95%</text>
+                            <text id="qualDayLabel4" x="450" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">11</text>
+
+                            <circle cx="550" cy="60" r="5" fill="var(--accent-color)" />
+                            <text id="qualPointText5" x="550" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">85%</text>
+                            <text id="qualDayLabel5" x="550" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">12</text>
+
+                            <circle id="qualityTodayCircle" cx="650" cy="100" r="6" fill="var(--bg-card, #1e1e1e)" stroke="var(--accent-color)" stroke-width="3" />
+                            <text id="qualityTodayText" x="650" y="88" fill="var(--accent-color)" font-size="11" font-weight="bold" text-anchor="middle">0%</text>
+                            <text id="qualDayLabel6" x="650" y="225" fill="var(--accent-color)" font-size="12" font-weight="bold" text-anchor="middle">Today</text>
+                        </svg>
+
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="small theme-text-sub mb-1">7-day average recovery score: <strong class="theme-text-title" id="avgQualityText">85%</strong></p>
+                    <div id="sleepQualityMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Excellent sleep quality and recovery performance!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sleepHistoryManagementContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-calendar2-week me-2" style="color: var(--accent-color);"></i>Historical Sleep Logs & Management</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="toggleSleepLogsList()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-list-check me-1"></i> View & Edit Past Logs
+                </button>
+            </div>
+
+            <div id="sleepLogsListSection" class="d-none pt-2">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="toggleAddPastSleepLogForm()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                        <i class="bi bi-plus-circle me-1"></i> Add Log
+                    </button>
+                </div>
+
+                <div id="sleepAddPastLogSection" class="d-none pt-2 pb-3 border-top border-secondary mb-3">
+                    <h6 class="fw-bold mb-2 pt-2" style="color: var(--accent-color);">Add Missing Sleep Log</h6>
+                    <p class="small theme-text-sub mb-3">Select a date and insert past sleep data (only one entry per day is allowed):</p>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1">Date</label>
+                            <input type="date" id="addPastSleepDate" class="form-control form-control-sm custom-select-dropdown">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1">Hours Slept</label>
+                            <select id="addPastSleepHours" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1">Wake Status</label>
+                            <select id="addPastSleepStatus" class="form-select form-select-sm custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                                <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
+                                <option value="Rested & Good" selected>Rested & Good (Good)</option>
+                                <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
+                                <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveNewPastSleepLog()" style="background-color: var(--accent-color); color: #111;">
+                            Save Past Log
+                        </button>
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary" onclick="toggleAddPastSleepLogForm()" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <p class="small theme-text-sub mb-2">Select a date below to load and edit the sleep metrics recorded on that specific day:</p>
+                <div id="sleepLoggedDatesContainer" class="d-flex flex-column gap-2 mb-3">
+                </div>
+            </div>
+
+            <div id="sleepDateEditFormSection" class="d-none pt-3 border-top border-secondary mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Sleep Log for: <span id="sleepEditingDateTitle" class="theme-text-title">--</span></h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteSleepLogEntry()" style="font-size: 0.8rem;">Delete Log</button>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="small theme-text-sub mb-1">Hours Slept</label>
+                        <select id="editSleepLogInput" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small theme-text-sub mb-1">Wake Status</label>
+                        <select id="editWakeStatusSelect" class="form-select form-select-sm custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                            <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
+                            <option value="Rested & Good">Rested & Good (Good)</option>
+                            <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
+                            <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveEditedSleepLogEntry()" style="background-color: var(--accent-color); color: #111;">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="bipCustomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg theme-card border border-secondary" style="background-color: var(--bg-card, #1e1e1e); color: var(--text-color, #ffffff);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold" id="bipModalTitle" style="color: var(--accent-color);">Body in Progress</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bipModalBody">
+            </div>
+            <div class="modal-footer border-top border-secondary" id="bipModalFooter">
+                <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal" style="background-color: var(--accent-color); color: #111;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleep.css') }}">
+
+<script src="{{ url_for('static', filename='js/sleep.js') }}"></script>
+{% endblock %}

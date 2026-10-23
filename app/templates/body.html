@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Body Metrics & Measurements{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-3 pb-2">
+    <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2 shadow-sm" style="width: 70px; height: 70px; background-color: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-color);">
+                <i class="bi bi-rulers fs-2" style="color: var(--accent-color);"></i>
+            </div>
+            <h3 class="fw-bold theme-text-title mb-1 text-light-adapt">Body Metrics & Measurements</h3>
+            <p class="small theme-text-sub text-light-adapt">Track your physical transformation over time by recording detailed body circumferences, height, and weight progression.</p>
+        </div>
+
+        <div id="bodyConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1 theme-text-title text-light-adapt"><i class="bi bi-sliders me-2" style="color: var(--accent-color);"></i>Body Metrics Tracking Hub</h6>
+                    <span class="small theme-text-sub text-light-adapt">Enable body measurement logging and historical progression charts.</span>
+                </div>
+                <div class="form-check form-switch fs-4">
+                    <input class="form-check-input custom-accent-switch" type="checkbox" role="switch" id="bodyHubOptIn" onchange="toggleBodyContainer(this)">
+                </div>
+            </div>
+
+            <div id="bodyHubContent" class="d-none pt-2">
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="small fw-bold theme-text-title mb-1 text-light-adapt">Body Weight</label>
+                        <div class="input-group">
+                            <input type="number" id="metricWeight" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                            <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">kg</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold theme-text-title mb-1 text-light-adapt">Height</label>
+                        <div class="input-group">
+                            <input type="number" id="metricHeight" class="form-control custom-select-dropdown" placeholder="1.75" step="0.01" min="0">
+                            <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-secondary theme-card p-3 mb-3 rounded-3 theme-box-toggle">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0" style="color: var(--accent-color);"><i class="bi bi-shield-fill me-2"></i>Trunk & Abdomen</h6>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Neck</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricNeck" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Shoulders</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricShoulders" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Chest</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricChest" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Abdomen</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricAbdomen" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-secondary theme-card p-3 mb-3 rounded-3 theme-box-toggle">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0" style="color: var(--accent-color);"><i class="bi bi-activity me-2"></i>Upper Limbs (Arms)</h6>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Bicep</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricRightBicep" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Bicep</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricLeftBicep" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Forearm</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricRightForearm" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Forearm</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricLeftForearm" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-secondary theme-card p-3 mb-3 rounded-3 theme-box-toggle">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0" style="color: var(--accent-color);"><i class="bi bi-lightning-charge-fill me-2"></i>Lower Limbs (Legs & Glutes)</h6>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Glutes</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricGlutes" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Thigh</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricRightThigh" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Thigh</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricLeftThigh" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Calf</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricRightCalf" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Calf</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="metricLeftCalf" class="form-control custom-select-dropdown" placeholder="0.0" step="0.1" min="0">
+                                <span class="input-group-text custom-select-dropdown theme-text-title border-secondary">cm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn px-5 py-2 fw-bold rounded-pill shadow" onclick="saveBodyMetricsRecord()" style="background-color: var(--accent-color); color: #111;">
+                        Save Configuration
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="bodyDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-speedometer2 me-2" style="color: var(--accent-color);"></i>BMI & Body Weight Progress</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="openBodyConfigurationHub()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+
+            <div class="mb-0 p-3 rounded-3 theme-box-toggle border border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small theme-text-sub fw-bold text-light-adapt">Current Weight: <span id="dashCurrentWeight" class="theme-text-title text-light-adapt">0 kg</span></span>
+                    <span class="small theme-text-sub fw-bold text-light-adapt">Ideal Weight Range: <span id="dashIdealWeightRange" class="theme-text-title text-light-adapt">--</span></span>
+                </div>
+
+                <div class="progress mb-3" style="height: 18px; background-color: rgba(255,255,255,0.1); border-radius: 9px; overflow: hidden;">
+                    <div id="bmiProgressBar" class="progress-bar" role="progressbar" style="width: 0%; background-color: var(--accent-color); transition: width 0.4s ease;"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <span id="bmiStatusText" class="small fw-bold" style="color: var(--accent-color);">BMI Status: --</span>
+                </div>
+
+                <div class="small fw-bold px-3 py-2 rounded-3 text-center" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                    <i class="bi bi-info-circle-fill me-1"></i> Note: BMI is a general reference standard. Your ideal body composition depends heavily on muscle mass gains, strength training regimen, and individual body structure.
+                </div>
+            </div>
+        </div>
+
+        <div id="weightHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-graph-up me-2" style="color: var(--accent-color);"></i>Weight History Chart (kg)</h5>
+            </div>
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary">
+                <div class="d-flex" style="height: 220px;">
+                    <div id="weightYAxis" class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold text-light-adapt" style="width: 50px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div class="position-relative flex-grow-1" style="height: 220px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+                        <svg id="weightSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
+                            <polyline id="weightPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="weightPointsGroup"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="trunkHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-shield-fill me-2" style="color: var(--accent-color);"></i>Trunk & Abdomen Progression</h5>
+                <div style="max-width: 200px;">
+                    <select id="trunkFilterSelect" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=4;" onblur="this.size=1;" onchange="this.size=1; this.blur(); renderTrunkChart();">
+                        <option value="Abdomen" selected>Abdomen</option>
+                        <option value="Chest">Chest</option>
+                        <option value="Shoulders">Shoulders</option>
+                        <option value="Neck">Neck</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div class="d-flex" style="height: 220px;">
+                    <div id="trunkYAxis" class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold text-light-adapt" style="width: 50px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div class="position-relative flex-grow-1" style="height: 220px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+                        <svg id="trunkSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
+                            <polyline id="trunkPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="trunkPointsGroup"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="armsHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-activity me-2" style="color: var(--accent-color);"></i>Upper Limbs Progression</h5>
+                <div style="max-width: 220px;">
+                    <select id="armsFilterSelect" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=4;" onblur="this.size=1;" onchange="this.size=1; this.blur(); renderArmsChart();">
+                        <option value="RightBicep" selected>Right Bicep</option>
+                        <option value="LeftBicep">Left Bicep</option>
+                        <option value="RightForearm">Right Forearm</option>
+                        <option value="LeftForearm">Left Forearm</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div class="d-flex" style="height: 220px;">
+                    <div id="armsYAxis" class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold text-light-adapt" style="width: 50px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div class="position-relative flex-grow-1" style="height: 220px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+                        <svg id="armsSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
+                            <polyline id="armsPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="armsPointsGroup"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="legsHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-lightning-charge-fill me-2" style="color: var(--accent-color);"></i>Lower Limbs Progression</h5>
+                <div style="max-width: 220px;">
+                    <select id="legsFilterSelect" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur(); renderLegsChart();">
+                        <option value="Glutes" selected>Glutes</option>
+                        <option value="RightThigh">Right Thigh</option>
+                        <option value="LeftThigh">Left Thigh</option>
+                        <option value="RightCalf">Right Calf</option>
+                        <option value="LeftCalf">Left Calf</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div class="d-flex" style="height: 220px;">
+                    <div id="legsYAxis" class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold text-light-adapt" style="width: 50px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div class="position-relative flex-grow-1" style="height: 220px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+                        <svg id="legsSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
+                            <polyline id="legsPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="legsPointsGroup"></g>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <p class="small theme-text-sub mb-1 text-light-adapt">Total recorded entries: <strong class="theme-text-title text-light-adapt" id="totalEntriesText">0</strong> | Latest entry date: <strong class="theme-text-title text-light-adapt" id="latestEntryDateText">--</strong></p>
+                    <div id="bodyMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Consistent tracking is key to measuring true physical transformation!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="historyManagementContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-calendar2-week me-2" style="color: var(--accent-color);"></i>Historical Data Logs & Management</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="toggleLogsList()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-list-check me-1"></i> View & Edit Past Logs
+                </button>
+            </div>
+
+            <div id="logsListSection" class="d-none pt-2">
+  
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="toggleAddPastLogForm()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                        <i class="bi bi-plus-circle me-1"></i> Add Log
+                    </button>
+                </div>
+
+                <div id="bodyAddPastLogSection" class="d-none pt-2 pb-3 border-top border-secondary mb-3">
+                    <h6 class="fw-bold mb-2 pt-2" style="color: var(--accent-color);">Add Missing Body Log</h6>
+                    <p class="small theme-text-sub mb-3 text-light-adapt">Select a date and insert past body metrics and circumferences (only one entry per day is allowed):</p>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Date</label>
+                            <input type="date" id="addPastBodyDate" class="form-control form-control-sm custom-select-dropdown">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Weight (kg)</label>
+                            <input type="number" id="addPastBodyWeight" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Height (m)</label>
+                            <input type="number" id="addPastBodyHeight" class="form-control form-control-sm custom-select-dropdown" step="0.01" min="0" placeholder="1.75">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Neck</label>
+                            <input type="number" id="addPastBodyNeck" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Shoulders</label>
+                            <input type="number" id="addPastBodyShoulders" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Chest</label>
+                            <input type="number" id="addPastBodyChest" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Abdomen</label>
+                            <input type="number" id="addPastBodyAbdomen" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Bicep</label>
+                            <input type="number" id="addPastBodyRightBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Bicep</label>
+                            <input type="number" id="addPastBodyLeftBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Forearm</label>
+                            <input type="number" id="addPastBodyRightForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Forearm</label>
+                            <input type="number" id="addPastBodyLeftForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Glutes</label>
+                            <input type="number" id="addPastBodyGlutes" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Thigh</label>
+                            <input type="number" id="addPastBodyRightThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Thigh</label>
+                            <input type="number" id="addPastBodyLeftThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Right Calf</label>
+                            <input type="number" id="addPastBodyRightCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small theme-text-sub mb-1 text-light-adapt">Left Calf</label>
+                            <input type="number" id="addPastBodyLeftCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" placeholder="0.0">
+                        </div>
+                    </div>
+
+                    <div class="text-center d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveNewPastBodyLog()" style="background-color: var(--accent-color); color: #111;">
+                            Save Past Log
+                        </button>
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary" onclick="toggleAddPastLogForm()" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <p class="small theme-text-sub mb-2 text-light-adapt">Select a date below to load and edit the metrics recorded on that specific day:</p>
+                <div id="loggedDatesContainer" class="d-flex flex-column gap-2 mb-3">
+                </div>
+            </div>
+
+            <div id="dateEditFormSection" class="d-none pt-3 border-top border-secondary mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Log for: <span id="editingDateTitle" class="theme-text-title text-light-adapt">--</span></h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteLogEntry()" style="font-size: 0.8rem;">Delete Log</button>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Weight (kg)</label>
+                        <input type="number" id="editLogWeight" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Height (m)</label>
+                        <input type="number" id="editLogHeight" class="form-control form-control-sm custom-select-dropdown" step="0.01" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Neck</label>
+                        <input type="number" id="editLogNeck" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Shoulders</label>
+                        <input type="number" id="editLogShoulders" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Chest</label>
+                        <input type="number" id="editLogChest" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Abdomen</label>
+                        <input type="number" id="editLogAbdomen" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Bicep</label>
+                        <input type="number" id="editLogRightBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Bicep</label>
+                        <input type="number" id="editLogLeftBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Forearm</label>
+                        <input type="number" id="editLogRightForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Forearm</label>
+                        <input type="number" id="editLogLeftForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Glutes</label>
+                        <input type="number" id="editLogGlutes" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Thigh</label>
+                        <input type="number" id="editLogRightThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Thigh</label>
+                        <input type="number" id="editLogLeftThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Calf</label>
+                        <input type="number" id="editLogRightCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Calf</label>
+                        <input type="number" id="editLogLeftCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveEditedLogEntry()" style="background-color: var(--accent-color); color: #111;">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bipCustomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg theme-card border border-secondary" style="background-color: var(--bg-card, #1e1e1e); color: var(--text-color, #ffffff);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold" id="bipModalTitle" style="color: var(--accent-color);">Body in Progress</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-light-adapt" id="bipModalBody">
+            </div>
+            <div class="modal-footer border-top border-secondary" id="bipModalFooter">
+                <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal" style="background-color: var(--accent-color); color: #111;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/body.js') }}"></script>
+{% endblock %}

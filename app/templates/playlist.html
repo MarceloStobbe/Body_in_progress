@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Training Playlist & Audio Hub{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-3 pb-2">
+    <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
+
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2 shadow-sm"
+                style="width: 70px; height: 70px; background-color: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-color);">
+                <i class="bi bi-music-note-beamed fs-2" style="color: var(--accent-color);"></i>
+            </div>
+            <h3 class="fw-bold theme-text-title mb-1 text-light-adapt">Training Playlist & Audio Hub</h3>
+            <p class="small theme-text-sub text-light-adapt">Listen to high-energy workout radios or add custom audio
+                streams for seamless training sessions.</p>
+        </div>
+
+        <div id="playlistConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3">
+            <div
+                class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1 theme-text-title text-light-adapt"><i class="bi bi-sliders me-2"
+                            style="color: var(--accent-color);"></i>Playlist Setup Hub</h6>
+                    <span class="small theme-text-sub text-light-adapt">Enable radio stream integration and
+                        presets.</span>
+                </div>
+                <div class="form-check form-switch fs-4">
+                    <input class="form-check-input custom-accent-switch" type="checkbox" role="switch"
+                        id="playlistHubOptIn" onchange="togglePlaylistContainer(this)">
+                </div>
+            </div>
+
+            <div id="playlistHubContent" class="d-none pt-2">
+
+                <div id="addPlaylistFormSection" class="pb-3 border-bottom border-secondary mb-3 d-none">
+                    <h6 class="fw-bold mb-2 pt-2" style="color: var(--accent-color);">Add Custom Audio Stream</h6>
+                    <div class="mb-3">
+                        <label class="small fw-bold theme-text-title mb-1 text-light-adapt">Stream / Station
+                            Name</label>
+                        <input type="text" id="newPlaylistName" class="form-control custom-select-dropdown"
+                            placeholder="e.g., Heavy Gym Session">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold theme-text-title mb-1 text-light-adapt">Direct Audio Stream / Embed
+                            URL</label>
+                        <input type="text" id="playlistUrlInput" class="form-control custom-select-dropdown"
+                            placeholder="https://stream-url-or-radio-embed">
+                    </div>
+                    <div class="text-center d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow"
+                            onclick="saveNewPlaylist()" style="background-color: var(--accent-color); color: #111;">
+                            Save Custom Stream
+                        </button>
+                        <button type="button"
+                            class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary"
+                            onclick="toggleAddCustomForm(false)"
+                            style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3 text-end">
+                    <button type="button" class="btn btn-sm px-3 rounded-pill fw-bold"
+                        onclick="toggleAddCustomForm(true)" style="background-color: var(--accent-color); color: #111;">
+                        <i class="bi bi-plus-circle me-1"></i> Add Custom URL
+                    </button>
+                </div>
+
+                <div class="pb-3 border-bottom border-secondary mb-3">
+                    <h6 class="fw-bold mb-2 text-light-adapt" style="font-size: 0.9rem;"><i class="bi bi-stars me-1"
+                            style="color: var(--accent-color);"></i>Popular Workout Radio Presets (One-Click Add)</h6>
+                    <div id="presetsContainer" class="d-flex flex-column gap-2"
+                        style="max-height: 260px; overflow-y: auto;">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="fw-bold mb-2 text-light-adapt" style="font-size: 0.9rem;"><i
+                            class="bi bi-list-nested me-1" style="color: var(--accent-color);"></i>Manage Saved Streams
+                    </h6>
+                    <div id="savedPlaylistsContainer" class="d-flex flex-column gap-2">
+
+                    </div>
+                </div>
+
+                <div class="text-center pt-3 border-top border-secondary">
+                    <button type="button" class="btn btn-sm px-5 py-2 fw-bold rounded-pill shadow"
+                        onclick="saveAndReturnToMain()" style="background-color: var(--accent-color); color: #111;">
+                        Save Configuration
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="playlistDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0 text-light-adapt"><i class="bi bi-play-circle-fill me-2"
+                        style="color: var(--accent-color);"></i>Now Playing / Workout Session</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill"
+                    onclick="openPlaylistHub()"
+                    style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+
+            <div id="activeRadioContainer" class="mb-3">
+            </div>
+
+            <div id="activeStreamsLineByLineContainer" class="d-flex flex-column gap-2">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="bipCustomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg theme-card border border-secondary"
+            style="background-color: var(--bg-card, #1e1e1e); color: var(--text-color, #ffffff);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold" id="bipModalTitle" style="color: var(--accent-color);">Body in Progress
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-light-adapt" id="bipModalBody">
+            </div>
+            <div class="modal-footer border-top border-secondary" id="bipModalFooter">
+                <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal"
+                    style="background-color: var(--accent-color); color: #111;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/playlist.css') }}">
+
+<script src="{{ url_for('static', filename='js/playlist.js') }}"></script>
+{% endblock %}

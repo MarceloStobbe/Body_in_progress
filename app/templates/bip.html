@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | BIP Social Feed{% endblock %}
+{% block content %}
+<div class="row justify-content-center pb-5 mb-5">
+    <div class="col-lg-6 col-md-8">
+
+        <div class="d-flex overflow-auto py-3 px-2 mb-4 rounded-4 shadow-sm align-items-center gap-3 no-scrollbar" id="stories-bar" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08);">
+            
+            <div class="text-center flex-shrink-0" style="cursor: pointer;" onclick="openStoryModal()">
+                <div class="position-relative rounded-circle p-1 d-flex align-items-center justify-content-center mx-auto mb-1" style="width: 64px; height: 64px; border: 2px dashed var(--accent-color);">
+                    {% if user_profile_photo %}
+                        <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}" alt="Story" class="rounded-circle w-100 h-100 object-fit-cover">
+                    {% else %}
+                        <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center text-light fw-bold" style="background-color: #222; color: var(--accent-color) !important;">U</div>
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0 rounded-circle bg-dark d-flex align-items-center justify-content-center text-light" style="width: 20px; height: 20px; border: 2px solid var(--bg-card);">
+                        <i class="bi bi-plus" style="font-size: 0.8rem; color: var(--accent-color);"></i>
+                    </div>
+                </div>
+                <small class="text-light text-truncate d-block" style="font-size: 0.75rem; max-width: 64px;">Your Story</small>
+            </div>
+
+        </div>
+
+        <div id="feed-container">
+            <div id="noPostsYetMessage" class="text-center py-5 text-muted">
+                <i class="bi bi-camera fs-1 d-block mb-2" style="color: var(--accent-color); opacity: 0.5;"></i>
+                <p class="small">No posts in your feed yet. Create your first publication using the button below!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed-bottom pointer-events-none" style="bottom: 80px; z-index: 1030;">
+    <div class="container d-flex justify-content-center">
+        <div class="d-flex align-items-center gap-4 p-2 rounded-pill shadow-lg pointer-events-auto" style="background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);">
+            
+            <a href="{{ url_for('main.bip') }}" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm" style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);" title="Feed Home">
+                <i class="bi bi-house-door-fill fs-5" style="color: var(--accent-color);"></i>
+            </a>
+
+            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 50px; height: 50px; background-color: var(--accent-color); border: none;" onclick="openFeedModal()" title="Create Feed Post">
+                <i class="bi bi-plus-lg fs-4 text-dark fw-bold"></i>
+            </button>
+
+            <a href="{{ url_for('main.bip') }}?view=my_activity" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm" style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);" title="My Posts & Activity">
+                <i class="bi bi-person-fill fs-5" style="color: var(--accent-color);"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-light border-secondary shadow-lg rounded-4">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold" id="modalHeaderTitle" style="color: var(--accent-color);">Create New Publication</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="postForm" onsubmit="handlePostSubmit(event)">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Select Mode</label>
+                                <select class="form-select bg-black text-light border-secondary" id="postTypeSelect" name="post_type">
+                                    <option value="feed">Feed Post (Permanent)</option>
+                                    <option value="story">Story (Expires in 24h)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="mediaInput" class="form-label small text-muted"><i class="bi bi-film me-1"></i> Attach Photo or Video</label>
+                                <input type="file" class="form-control bg-black text-light border-secondary" id="mediaInput" name="media_file" accept="image/*,video/*" onchange="previewMedia(event)">
+                            </div>
+
+                            <div class="mb-3 d-none" id="cropControls">
+                                <label class="form-label small text-muted d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-arrows-move me-1"></i> Adjust Position & Zoom</span>
+                                    <span id="zoomVal" class="text-light">100%</span>
+                                </label>
+                                <input type="range" class="form-range" id="zoomRange" min="100" max="250" value="100" oninput="applyMediaTransform()">
+                                <small class="text-muted d-block" style="font-size: 0.72rem;"><i class="bi bi-info-circle me-1"></i> Drag media in the preview box to reposition.</small>
+                            </div>
+
+                            <div class="mb-3 d-none" id="muteVideoOption">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="muteVideoSwitch" checked onchange="toggleVideoMute()">
+                                    <label class="form-check-label small text-muted" for="muteVideoSwitch"><i class="bi bi-volume-mute me-1"></i> Mute original video audio</label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted"><i class="bi bi-music-note-beamed me-1"></i> Background Music / Track</label>
+                                <select class="form-select bg-black text-light border-secondary" id="musicSelect" onchange="updatePreview()">
+                                    <option value="">No Background Music</option>
+                                    <option value="EDM Workout Power">⚡ EDM Workout Power</option>
+                                    <option value="Lofi Gym Focus Beats">🎧 Lofi Gym Focus Beats</option>
+                                    <option value="Motivation Speech">🔥 Motivation Speech</option>
+                                    <option value="Phonk Training Energy">🏎️ Phonk Training Energy</option>
+                                    <option value="Hardstyle Beast Mode">💪 Hardstyle Beast Mode</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="captionInput" class="form-label small text-muted">Caption / Thoughts</label>
+                                <textarea class="form-control bg-black text-light border-secondary" id="captionInput" name="caption" rows="3" placeholder="What's on your mind regarding your fitness journey?" style="resize: none;" oninput="updatePreview()"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="d-block text-muted small mb-2 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Live Preview</span>
+                            
+                            <div class="card rounded-4 border-secondary text-light overflow-hidden shadow-sm" style="background-color: var(--bg-card);">
+                                <div class="p-2 d-flex align-items-center justify-content-between border-bottom border-secondary">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center text-light fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem; border: 1.5px solid var(--accent-color);">
+                                            {% if user_profile_photo %}
+                                                <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}" alt="Profile" class="w-100 h-100 object-fit-cover">
+                                            {% else %}
+                                                <span style="color: var(--accent-color);">U</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold text-light" style="font-size: 0.8rem;">{{ session.get('name', 'User') }}</span>
+                                            <small id="previewMusic" class="text-muted" style="font-size: 0.65rem; color: var(--accent-color) !important;">Preview Mode</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="previewContainer" class="bg-black d-flex align-items-center justify-content-center text-muted overflow-hidden position-relative" style="height: 220px; font-size: 0.8rem; cursor: grab;">
+                                    No photo or video selected
+                                </div>
+
+                                <div class="p-2">
+                                    <div class="d-flex gap-2 text-muted mb-1" style="font-size: 0.9rem;">
+                                        <i class="bi bi-heart"></i>
+                                        <i class="bi bi-chat" style="color: var(--accent-color);"></i>
+                                        <i class="bi bi-bookmark ms-auto"></i>
+                                    </div>
+                                    <div class="small text-light" id="previewCaption" style="font-size: 0.8rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtnText" class="btn w-100 fw-bold text-uppercase py-2 mt-3 rounded-pill shadow-sm" style="background-color: var(--accent-color); color: #111; font-size: 0.85rem;">
+                        Publish to BIP
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/bip.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Water & Hydration Tracker{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-4 pb-2">
+    <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
+
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2 shadow-sm"
+                style="width: 70px; height: 70px; background-color: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-color);">
+                <i class="bi bi-droplet-fill fs-2" style="color: var(--accent-color);"></i>
+            </div>
+            <h3 class="fw-bold theme-text-title mb-1">Hydration & Water Reminders</h3>
+            <p class="small theme-text-sub">Configure your custom hydration schedule and daily intake targets to stay at
+                your peak performance.</p>
+        </div>
+
+        <div id="hydrationConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4">
+            <div
+                class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1 theme-text-title"><i class="bi bi-sliders me-2"
+                            style="color: var(--accent-color);"></i>Hydration Configuration Hub</h6>
+                    <span class="small theme-text-sub">Set your daily target volume, reminder schedules, and closing
+                        check-in time.</span>
+                </div>
+                <div class="form-check form-switch fs-4">
+                    <input class="form-check-input custom-accent-switch" type="checkbox" role="switch"
+                        id="hydrationHubOptIn" onchange="toggleHydrationContainer(this)">
+                </div>
+            </div>
+
+            <div id="hydrationHubContent" class="d-none pt-2">
+                <div class="mb-4" style="max-width: 300px;">
+                    <label class="small fw-bold theme-text-title mb-1">Target Daily Water Volume</label>
+                    <span class="small theme-text-sub d-block text-nowrap mb-1">Select your desired water intake volume
+                        for the day.</span>
+                    <select id="dailyWaterTargetSelect" class="form-select border-secondary custom-select-dropdown"
+                        onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="small fw-bold theme-text-title mb-1">Reminder Schedules (AM / PM)</label>
+                    <span class="small theme-text-sub d-block mb-2">Receive automated screen notifications throughout
+                        the day (Optional).</span>
+
+                    <div id="scheduleList" class="d-flex flex-wrap gap-2 mb-3 align-items-center"></div>
+
+                    <div class="d-flex align-items-center gap-2" style="max-width: 300px;">
+                        <select id="timeSelectAMPM"
+                            class="form-select border-secondary px-3 custom-select-dropdown w-100"
+                            onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                            <option value="12:00 AM">12:00 AM</option>
+                            <option value="01:00 AM">01:00 AM</option>
+                            <option value="02:00 AM">02:00 AM</option>
+                            <option value="03:00 AM">03:00 AM</option>
+                            <option value="04:00 AM">04:00 AM</option>
+                            <option value="05:00 AM">05:00 AM</option>
+                            <option value="06:00 AM">06:00 AM</option>
+                            <option value="07:00 AM">07:00 AM</option>
+                            <option value="08:00 AM">08:00 AM</option>
+                            <option value="09:00 AM">09:00 AM</option>
+                            <option value="10:00 AM">10:00 AM</option>
+                            <option value="11:00 AM">11:00 AM</option>
+                            <option value="12:00 PM">12:00 PM</option>
+                            <option value="01:00 PM">01:00 PM</option>
+                            <option value="02:00 PM">02:00 PM</option>
+                            <option value="03:00 PM">03:00 PM</option>
+                            <option value="04:00 PM">04:00 PM</option>
+                            <option value="05:00 PM">05:00 PM</option>
+                            <option value="06:00 PM">06:00 PM</option>
+                            <option value="07:00 PM">07:00 PM</option>
+                            <option value="08:00 PM">08:00 PM</option>
+                            <option value="09:00 PM">09:00 PM</option>
+                            <option value="10:00 PM">10:00 PM</option>
+                            <option value="11:00 PM">11:00 PM</option>
+                        </select>
+                        <button
+                            class="btn btn-outline-secondary px-3 py-1 align-self-start d-flex align-items-center justify-content-center flex-shrink-0"
+                            type="button" onclick="addReminderTime()"
+                            style="border-color: rgba(255,255,255,0.2); color: var(--accent-color); font-weight: bold; height: 38px;">
+                            Add
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4" style="max-width: 300px;">
+                    <label class="small fw-bold theme-text-title mb-1">Check-in Closing Time</label>
+                    <span class="small theme-text-sub d-block text-nowrap mb-1">Set the final time of the day to log
+                        your total water intake (Optional).</span>
+                    <select id="dailyCheckSelect" class="form-select border-secondary custom-select-dropdown"
+                        onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        <option value="" selected>Select closing time...</option>
+                        <option value="12:00 AM">12:00 AM</option>
+                        <option value="01:00 AM">01:00 AM</option>
+                        <option value="02:00 AM">02:00 AM</option>
+                        <option value="03:00 AM">03:00 AM</option>
+                        <option value="04:00 AM">04:00 AM</option>
+                        <option value="05:00 AM">05:00 AM</option>
+                        <option value="06:00 AM">06:00 AM</option>
+                        <option value="07:00 AM">07:00 AM</option>
+                        <option value="08:00 AM">08:00 AM</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="11:00 AM">11:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
+                        <option value="01:00 PM">01:00 PM</option>
+                        <option value="02:00 PM">02:00 PM</option>
+                        <option value="03:00 PM">03:00 PM</option>
+                        <option value="04:00 PM">04:00 PM</option>
+                        <option value="05:00 PM">05:00 PM</option>
+                        <option value="06:00 PM">06:00 PM</option>
+                        <option value="07:00 PM">07:00 PM</option>
+                        <option value="08:00 PM">08:00 PM</option>
+                        <option value="09:00 PM">09:00 PM</option>
+                        <option value="10:00 PM">10:00 PM</option>
+                        <option value="11:00 PM">11:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn px-5 py-2 fw-bold rounded-pill shadow"
+                        onclick="saveHydrationConfiguration()"
+                        style="background-color: var(--accent-color); color: #111;">
+                        Save Configuration
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="hydrationIntakeContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-plus-circle me-2"
+                        style="color: var(--accent-color);"></i>Log Daily Water Intake</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill"
+                    onclick="openConfigurationHub()"
+                    style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+            <div class="row g-2 align-items-center justify-content-center">
+                <div class="col-md-8">
+                    <label class="small fw-bold theme-text-title mb-1">Daily water amount</label>
+                    <div class="input-group">
+                        <select id="waterLogInput" class="form-select border-secondary custom-select-dropdown"
+                            onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        </select>
+                        <button class="btn fw-bold px-4" type="button" onclick="logWaterIntake()"
+                            style="background-color: var(--accent-color); color: #111;">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="hydrationDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up-arrow me-2"
+                        style="color: var(--accent-color);"></i>Today's Hydration Progress</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill"
+                    onclick="openConfigurationHub()"
+                    style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-gear-fill me-1"></i> Edit Configuration
+                </button>
+            </div>
+
+            <div class="mb-4 p-3 rounded-3 theme-box-toggle border border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small theme-text-sub fw-bold">Consumed:
+                        <span id="consumedDisplay" class="theme-text-title">0 L</span>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-underline p-0 ms-2"
+                            onclick="enableEditConsumed()"
+                            style="color: var(--accent-color); font-size: 0.85rem;">Edit</button>
+                    </span>
+                    <span class="small theme-text-sub fw-bold">Target Goal: <span id="targetGoalDisplay"
+                            class="theme-text-title">0 L</span></span>
+                </div>
+
+                <div id="editConsumedContainer" class="input-group input-group-sm mb-3 d-none"
+                    style="max-width: 280px;">
+                    <select id="editConsumedInput"
+                        class="form-select form-select-sm border-secondary custom-select-dropdown"
+                        onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    </select>
+                    <button class="btn btn-sm fw-bold px-3" type="button" onclick="saveEditedConsumed()"
+                        style="background-color: var(--accent-color); color: #111;">Save</button>
+                </div>
+
+                <div class="progress"
+                    style="height: 18px; background-color: rgba(255,255,255,0.1); border-radius: 9px; overflow: hidden;">
+                    <div id="hydrationProgressBar" class="progress-bar" role="progressbar"
+                        style="width: 0%; background-color: var(--accent-color); transition: width 0.4s ease;"></div>
+                </div>
+                <div class="text-center mt-2">
+                    <span id="hydrationPercentageText" class="small fw-bold" style="color: var(--accent-color);">0% of
+                        daily goal reached</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="hydrationHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up me-2"
+                        style="color: var(--accent-color);"></i>7-Day Hydration Trend</h5>
+            </div>
+
+            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+
+                <div class="d-flex" style="height: 240px;">
+                    <div class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold"
+                        style="width: 40px; font-size: 0.75rem; height: 200px; border-right: 1px solid rgba(255,255,255,0.2);">
+                        <span>5L</span>
+                        <span>4L</span>
+                        <span>3L</span>
+                        <span>2L</span>
+                        <span>1L</span>
+                        <span>0L</span>
+                    </div>
+
+                    <div class="position-relative flex-grow-1" style="height: 240px;">
+                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0"
+                            style="height: 200px; pointer-events: none; opacity: 0.15;">
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                        </div>
+
+                        <svg id="trendSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;"
+                            viewBox="0 0 700 240" preserveAspectRatio="none">
+                            <polyline id="trendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3"
+                                points="50,120 150,116 250,80 350,100 450,140 550,88 650,200" />
+
+                            <circle cx="50" cy="120" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText0" x="50" y="108" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">2.0L</text>
+                            <text id="svgDayLabel0" x="50" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">7</text>
+
+                            <circle cx="150" cy="116" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText1" x="150" y="104" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">2.1L</text>
+                            <text id="svgDayLabel1" x="150" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">8</text>
+
+                            <circle cx="250" cy="80" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText2" x="250" y="68" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">3.0L</text>
+                            <text id="svgDayLabel2" x="250" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">9</text>
+
+                            <circle cx="350" cy="100" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText3" x="350" y="88" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">2.5L</text>
+                            <text id="svgDayLabel3" x="350" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">10</text>
+
+                            <circle cx="450" cy="140" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText4" x="450" y="128" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">1.5L</text>
+                            <text id="svgDayLabel4" x="450" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">11</text>
+
+                            <circle cx="550" cy="88" r="5" fill="var(--accent-color)" />
+                            <text id="svgPointText5" x="550" y="76" fill="currentColor" font-size="11"
+                                font-weight="bold" text-anchor="middle">2.8L</text>
+                            <text id="svgDayLabel5" x="550" y="225" fill="#a0aec0" font-size="12" font-weight="bold"
+                                text-anchor="middle">12</text>
+
+                            <circle id="trendTodayCircle" cx="650" cy="200" r="6" fill="var(--bg-card, #1e1e1e)"
+                                stroke="var(--accent-color)" stroke-width="3" />
+                            <text id="trendTodayText" x="650" y="188" fill="var(--accent-color)" font-size="11"
+                                font-weight="bold" text-anchor="middle">0.0L</text>
+                            <text id="svgDayLabel6" x="650" y="225" fill="var(--accent-color)" font-size="12"
+                                font-weight="bold" text-anchor="middle">Today</text>
+                        </svg>
+
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="small theme-text-sub mb-1">7-day average consumption: <strong class="theme-text-title"
+                            id="avgConsumptionText">2.3 L</strong></p>
+                    <div id="motivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2"
+                        style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> You are meeting your hydration goal, congratulations!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="waterHistoryManagementContainer"
+            class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-calendar2-week me-2"
+                        style="color: var(--accent-color);"></i>Historical Hydration Logs & Management</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill"
+                    onclick="toggleWaterLogsList()"
+                    style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                    <i class="bi bi-list-check me-1"></i> View & Edit Past Logs
+                </button>
+            </div>
+
+            <div id="waterLogsListSection" class="d-none pt-2">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill"
+                        onclick="toggleAddPastWaterLogForm()"
+                        style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                        <i class="bi bi-plus-circle me-1"></i> Add Log
+                    </button>
+                </div>
+
+                <div id="waterAddPastLogSection" class="d-none pt-2 pb-3 border-top border-secondary mb-3">
+                    <h6 class="fw-bold mb-2 pt-2" style="color: var(--accent-color);">Add Missing Hydration Log</h6>
+                    <p class="small theme-text-sub mb-3">Select a date and insert past water data (only one entry per
+                        day is allowed):</p>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1">Date</label>
+                            <input type="date" id="addPastWaterDate"
+                                class="form-control form-control-sm custom-select-dropdown">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small theme-text-sub mb-1">Water Volume</label>
+                            <select id="addPastWaterVolume"
+                                class="form-select form-select-sm border-secondary custom-select-dropdown"
+                                onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow"
+                            onclick="saveNewPastWaterLog()" style="background-color: var(--accent-color); color: #111;">
+                            Save Past Log
+                        </button>
+                        <button type="button"
+                            class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary"
+                            onclick="toggleAddPastWaterLogForm()"
+                            style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <p class="small theme-text-sub mb-2">Select a date below to load and edit the hydration metrics recorded
+                    on that specific day:</p>
+                <div id="waterLoggedDatesContainer" class="d-flex flex-column gap-2 mb-3">
+                </div>
+            </div>
+
+            <div id="waterDateEditFormSection" class="d-none pt-3 border-top border-secondary mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Hydration Log for: <span
+                            id="waterEditingDateTitle" class="theme-text-title">--</span></h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
+                        onclick="deleteWaterLogEntry()" style="font-size: 0.8rem;">Delete Log</button>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="small theme-text-sub mb-1">Water Volume</label>
+                        <select id="editWaterLogInput"
+                            class="form-select form-select-sm border-secondary custom-select-dropdown"
+                            onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow"
+                        onclick="saveEditedWaterLogEntry()" style="background-color: var(--accent-color); color: #111;">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="bipCustomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg theme-card border border-secondary"
+            style="background-color: var(--bg-card, #1e1e1e); color: var(--text-color, #ffffff);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold" id="bipModalTitle" style="color: var(--accent-color);">Body in Progress
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bipModalBody">
+            </div>
+            <div class="modal-footer border-top border-secondary" id="bipModalFooter">
+                <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal"
+                    style="background-color: var(--accent-color); color: #111;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/water.css') }}">
+
+<script src="{{ url_for('static', filename='js/water.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Authentication{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center py-5 my-3">
+    <div class="col-md-6 col-lg-5">
+        <div class="p-4 p-md-5 rounded-4 shadow-lg auth-card-container">
+            
+            <ul class="nav nav-pills nav-fill mb-4 p-1 rounded-pill auth-tabs-container" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill fw-bold text-uppercase small" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-content" type="button" role="tab">Sign In</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill fw-bold text-uppercase small" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-content" type="button" role="tab">Register</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="authTabsContent">
+
+                <div class="tab-pane fade show active" id="login-content" role="tabpanel" aria-labelledby="login-tab">
+                    <h3 class="fw-bold text-light mb-4 text-center">Welcome Back</h3>
+                    
+                    <form method="POST" action="{{ url_for('main.login') }}">
+                        <div class="mb-3">
+                            <label for="login-email" class="form-label text-light small fw-bold">Email Address</label>
+                            <input type="email" class="form-control text-light border-secondary" id="login-email" name="email" required placeholder="your@email.com">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="login-password" class="form-label text-light small fw-bold">Password</label>
+                            <input type="password" class="form-control text-light border-secondary" id="login-password" name="password" required placeholder="••••••••">
+                        </div>
+                        
+                        <button type="submit" class="btn w-100 py-3 fw-bold rounded-pill shadow-sm text-uppercase auth-submit-btn">
+                            Access Account
+                        </button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="register-content" role="tabpanel" aria-labelledby="register-tab">
+                    <h3 class="fw-bold text-light mb-4 text-center">Create Your Account</h3>
+                    
+                    <form method="POST" action="{{ url_for('main.register') }}">
+                        <div class="mb-3">
+                            <label for="reg-name" class="form-label text-light small fw-bold">Full Name</label>
+                            <input type="text" class="form-control text-light border-secondary" id="reg-name" name="name" required placeholder="Your Full Name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-email" class="form-label text-light small fw-bold">Email Address</label>
+                            <input type="email" class="form-control text-light border-secondary" id="reg-email" name="email" required placeholder="your@email.com">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reg-password" class="form-label text-light small fw-bold">Password (Min. 8 characters)</label>
+                            <input type="password" class="form-control text-light border-secondary" id="reg-password" name="password" required minlength="8" placeholder="••••••••">
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input border-secondary" id="termsCheck" required>
+                            <label class="form-check-label text-light small terms-label" for="termsCheck">
+                                I have read and agree to the <a href="{{ url_for('main.terms') }}" target="_blank" class="terms-link">Terms of Service</a> and <a href="{{ url_for('main.privacy') }}" target="_blank" class="terms-link">Privacy Policy</a>.
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn w-100 py-3 fw-bold rounded-pill shadow-sm text-uppercase auth-submit-btn">
+                            Create Account & Setup Profile
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}

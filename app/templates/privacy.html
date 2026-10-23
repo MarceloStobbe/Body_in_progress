@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Privacy Policy{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-4 pb-3">
+    <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2 shadow-sm" style="width: 70px; height: 70px; background-color: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-color);">
+                <i class="bi bi-shield-lock-fill fs-2" style="color: var(--accent-color);"></i>
+            </div>
+            <h3 class="fw-bold theme-text-title mb-1 text-light-adapt">Privacy Policy</h3>
+            <p class="small theme-text-sub text-light-adapt">How your training data, preferences, and local information are secured.</p>
+        </div>
+
+        <div class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3">
+            
+            <div class="mb-4">
+                <h5 class="fw-bold mb-2 text-light-adapt" style="color: var(--accent-color);">
+                    <i class="bi bi-server me-2"></i>1. Local Data Storage & Session State
+                </h5>
+                <p class="small theme-text-sub text-light-adapt lh-base">
+                    Body in Progress (BIP) operates securely on your browser. All your custom workout logs, profile parameters, configuration states, and media preferences are maintained locally using <code class="text-warning">localStorage</code>. Your active session state is seamlessly preserved across all page transitions.
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-2 text-light-adapt" style="color: var(--accent-color);">
+                    <i class="bi bi-sliders me-2"></i>2. User Preferences & Themes
+                </h5>
+                <p class="small theme-text-sub text-light-adapt lh-base">
+                    Your visual preferences (such as Light/Dark theme settings, accent colors, and module opt-in toggles like the Training Playlist & Audio Hub configuration) are saved locally to ensure a consistent UI/UX experience without tracking your identity.
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-2 text-light-adapt" style="color: var(--accent-color);">
+                    <i class="bi bi-broadcast me-2"></i>3. Third-Party Media & Audio Streams
+                </h5>
+                <p class="small theme-text-sub text-light-adapt lh-base">
+                    When utilizing the Training Playlist & Audio Hub feature, direct audio streams (radio feeds) are loaded via HTML5 audio elements directly from their respective public broadcasters, utilizing standard network requests handled by third-party content delivery networks (CDNs).
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <h5 class="fw-bold mb-2 text-light-adapt" style="color: var(--accent-color);">
+                    <i class="bi bi-shield-check me-2"></i>4. Data Security & Control
+                </h5>
+                <p class="small theme-text-sub text-light-adapt lh-base mb-0">
+                    You retain total ownership and control over your data. You can clear or reset your stored application configurations or sign out at any time directly through the application interface or your browser settings.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Elite Profile Configuration{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center py-4 my-2">
+    <div class="col-lg-8">
+        <div class="p-4 p-md-5 rounded-4 shadow-lg" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color);">
+            
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-light">Complete Your <span style="color: var(--accent-color);">Physical Profile</span></h2>
+                <p class="text-light small" style="opacity: 0.75;">Set your vital parameters to calibrate your tracking metrics and transformation insights.</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.profile') }}">
+                
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label for="birth_date" class="form-label text-light small fw-bold">Birth Date</label>
+                        <input type="date" class="form-control bg-dark text-light border-secondary" id="birth_date" name="birth_date" required style="background-color: #000000 !important;">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="weight" class="form-label text-light small fw-bold">Weight (kg)</label>
+                        <input type="number" step="0.1" class="form-control bg-dark text-light border-secondary" id="weight" name="weight" required placeholder="e.g. 78.5" style="background-color: #000000 !important;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="height" class="form-label text-light small fw-bold">Height (m)</label>
+                        <input type="text" class="form-control text-light border-secondary" id="height" name="height" required placeholder="1.78" pattern="[0-9]+([,\.][0-9]+)?" title="Please insert a valid value with up to 2 decimal places (e.g., 1.78)">
+                    </div>
+
+                    <div class="col-md-12 mb-4">
+                        <label for="profile_photo" class="form-label text-light small fw-bold">Profile Photo</label>
+                        <input type="file" class="form-control bg-dark text-light border-secondary" id="profile_photo" name="profile_photo" accept="image/*" style="background-color: #000000 !important;">
+                        <div class="form-text text-muted small mt-1">Upload a clear portrait photo for your transformation archive.</div>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn py-3 fw-bold rounded-pill shadow-sm text-uppercase" style="background-color: var(--accent-color); color: #111; letter-spacing: 0.5px;">
+                        Save Profile & Start Tracking
+                    </button>
+                </div>
+            </form>
+
+            <div id="password-section" class="mt-5 pt-4 border-top border-secondary">
+                <h3 class="fw-bold text-light mb-3">Change <span style="color: var(--accent-color);">Password</span></h3>
+                <p class="text-light small mb-4" style="opacity: 0.75;">Ensure your account is using a secure password to protect your profile data.</p>
+                
+                <form method="POST" action="{{ url_for('main.profile') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label text-light small fw-bold">Current Password</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="current_password" name="current_password" required style="background-color: #000000 !important;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label text-light small fw-bold">New Password</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="new_password" name="new_password" required style="background-color: #000000 !important;">
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn py-2 fw-bold rounded-pill shadow-sm text-uppercase" style="background-color: var(--accent-color); color: #111; font-size: 0.85rem; letter-spacing: 0.5px;">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

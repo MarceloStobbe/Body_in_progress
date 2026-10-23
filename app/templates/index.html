@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Body in Progress | Elite Fitness Tracking{% endblock %}
+{% block content %}
+
+<div class="row align-items-center py- my-2">
+    <div class="col-lg-7 text-center text-lg-start mb-5 mb-lg-0">
+        <h1 class="display-3 fw-bold mb-4 text-light-adapt" style="letter-spacing: -0.5px; line-height: 1.15;">
+            Build Your Legacy. <br>Forge Your <span style="color: var(--accent-color);">Ultimate Physique</span>.
+        </h1>
+
+        <p class="lead text-light-adapt mb-5" style="opacity: 0.85; font-size: 1.15rem; line-height: 1.6;">
+            The complete ecosystem for serious athletes. Manage custom workout splits, track progressive overload,
+            monitor sleep recovery, control hydration, boost performance with curated playlists, and connect with the
+            community.
+        </p>
+
+        <div>
+            <a href="{{ url_for('main.login') }}"
+                class="btn btn-lg px-5 py-3 fw-bold rounded-pill shadow-lg text-uppercase btn-get-started"
+                style="background-color: var(--accent-color); color: #111; border: none; letter-spacing: 0.5px;">
+                Get Started Free
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-5 d-flex justify-content-center align-items-center">
+        <div class="w-100" style="max-width: 450px;">
+            <img src="{{ url_for('static', filename='img/body.jpg') }}" alt="Elite Fitness Physique"
+                class="img-fluid w-100 rounded-4 shadow-lg" style="filter: drop-shadow(0 0 8px var(--accent-color))">
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-3 pt-3 border-top border-secondary">
+    <div class="col-12 text-center mb-3">
+        <h2 class="fw-bold text-light-adapt">Master Every <span style="color: var(--accent-color);">Detail of Your
+                Transformation</span></h2>
+        <p class="text-light-adapt" style="opacity: 0.75;">Integrated tools designed to cover training, recovery,
+            nutrition, and social growth.</p>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Workout Center</div>
+                <h4 class="fw-bold text-light-adapt mb-3">Custom Splits & Load Logs</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Build custom routines, manage body splits, log weights/reps with absolute precision, and use
+                    built-in rest timers with alarms to enforce progressive overload.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im1.jpg') }}" alt="Workout Center"
+                    class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Sleep & Recovery</div>
+                <h4 class="fw-bold text-light-adapt mb-3">Recovery & Sleep Metrics</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Track nightly sleep duration, sleep quality scores, and recovery trends to guarantee your central
+                    nervous system is fully recharged for heavy lifting.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im2.jpg') }}" alt="Sleep & Recovery"
+                    class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Hydration Fuel</div>
+                <h4 class="fw-bold text-light-adapt mb-3">Water Intake & Goals</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Keep cellular hydration at peak levels with quick-add volume buttons, custom daily targets, and
+                    historical water consumption logs.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im3.jpg') }}" alt="Water Tracker"
+                    class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Analytics & Insights</div>
+                <h4 class="fw-bold text-light-adapt mb-3">Progress & Correlations Hub</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Visualize strength growth charts, body metrics evolution, and discover correlations between your
+                    sleep, hydration, and training performance.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im4.jpg') }}" alt="Progress Analytics"
+                    class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Audio & Focus</div>
+                <h4 class="fw-bold text-light-adapt mb-3">Training Playlist & Audio Hub</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Organize your heavy lifting soundtrack, embed high-energy motivational tracks, and manage your
+                    custom gym audio queue seamlessly.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im5.jpg') }}" alt="Audio Hub" class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="p-4 rounded-4 shadow-lg position-relative theme-card"
+            style="border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div>
+                <div class="mb-3 text-uppercase fw-bold small" style="color: var(--accent-color); letter-spacing: 1px;">
+                    Community & Feed</div>
+                <h4 class="fw-bold text-light-adapt mb-3">BIP Social Network</h4>
+                <p class="text-light-adapt small mb-4" style="opacity: 0.8; line-height: 1.6;">
+                    Connect with fellow athletes in the community forum. Share workouts, post transformation updates,
+                    and draw motivation from a dedicated fitness network.
+                </p>
+            </div>
+            <div class="mt-3 text-center">
+                <img src="{{ url_for('static', filename='img/im6.jpg') }}" alt="BIP Social Network"
+                    class="img-fluid rounded-3">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
