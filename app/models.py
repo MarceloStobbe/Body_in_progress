@@ -17,6 +17,8 @@ class User(db.Model):
     sleep_logs = db.relationship('SleepLog', backref='user', lazy=True)
     body_metrics = db.relationship('BodyMetric', backref='user', lazy=True)
     water_logs = db.relationship('WaterIntakeLog', backref='user', lazy=True)
+    posts = db.relationship('Post', backref='user', lazy=True)
+    stories = db.relationship('Story', backref='user', lazy=True)
 
 
 class WorkoutSession(db.Model):
@@ -51,9 +53,6 @@ class ExerciseLog(db.Model):
 
 
 class SleepLog(db.Model):
-    """
-    Tracks daily sleep hours and recovery quality for performance correlation analysis.
-    """
     __tablename__ = 'sleep_logs'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -86,3 +85,55 @@ class WaterIntakeLog(db.Model):
     
     reminder_times = db.Column(db.String(255), nullable=True) 
     notifications_enabled = db.Column(db.Boolean, default=True)
+
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    author_name = db.Column(db.String(100), nullable=False, default='Marcelo Stobbe')
+    media_url = db.Column(db.String(255), nullable=False)
+    is_video = db.Column(db.Boolean, default=False)
+    caption = db.Column(db.Text, nullable=True)
+    music = db.Column(db.String(100), nullable=True)
+    is_muted = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "author_name": self.author_name,
+            "media_url": self.media_url,
+            "is_video": self.is_video,
+            "caption": self.caption or "",
+            "music": self.music or "",
+            "is_muted": self.is_muted,
+            "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+
+class Story(db.Model):
+    __tablename__ = 'stories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    author_name = db.Column(db.String(100), nullable=False, default='Marcelo Stobbe')
+    media_url = db.Column(db.String(255), nullable=False)
+    is_video = db.Column(db.Boolean, default=False)
+    caption = db.Column(db.Text, nullable=True)
+    music = db.Column(db.String(100), nullable=True)
+    is_muted = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "author_name": self.author_name,
+            "media_url": self.media_url,
+            "is_video": self.is_video,
+            "caption": self.caption or "",
+            "music": self.music or "",
+            "is_muted": self.is_muted,
+            "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }

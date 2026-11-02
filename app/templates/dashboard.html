@@ -14,18 +14,18 @@
                         <i class="bi bi-lightning-charge-fill me-1"></i> Active Command Center
                     </span>
                     <h1 class="fw-bold display-6 mb-2" style="color: var(--text-color);">
-                        Welcome back, <span style="color: var(--accent-color);">
-                            {% if session.get('name') %}
-                            {{ session.get('name') }}
-                            {% elif session.get('user') %}
-                            {{ session.get('user') }}
-                            {% elif user_name and user_name != 'User' %}
-                            {{ user_name }}
-                            {% else %}
-                            User
-                            {% endif %}
-                        </span>
-                    </h1>
+    Welcome back, <span style="color: var(--accent-color);">
+        {% if user_name and user_name != 'User' %}
+            {{ user_name.split()[0] }}
+        {% elif session.get('name') %}
+            {{ session.get('name').split()[0] }}
+        {% elif session.get('user_name') %}
+            {{ session.get('user_name').split()[0] }}
+        {% else %}
+            User
+        {% endif %}
+    </span>
+</h1>
                     <p class="small mb-4" style="color: var(--text-muted); max-width: 500px;">Your physical
                         transformation blueprint is active. Monitor your daily recovery, push progressive overload, and
                         build momentum.</p>

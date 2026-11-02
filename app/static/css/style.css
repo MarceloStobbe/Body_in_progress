@@ -441,3 +441,23 @@ body[data-theme="light"] svg text:not([fill="var(--accent-color)"]) {
 .dropdown-toggle-no-caret::after {
             display: none !important;
 }
+
+.dropdown-menu-dark {
+    background-color: var(--bg-card, #1E1E1E) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dropdown-menu-dark .dropdown-item {
+    color: var(--text-main, #FFFFFF) !important;
+}
+
+.dropdown-menu-dark .dropdown-item:hover, 
+.dropdown-menu-dark .dropdown-item:focus {
+    background-color: var(--accent-color) !important;
+    color: #111111 !important;
+}
+
+.dropdown-menu-dark .dropdown-item:hover i, 
+.dropdown-menu-dark .dropdown-item:focus i {
+    color: #111111 !important;
+}
