@@ -20,3 +20,5 @@ Thumbs.db
 tests/
 
 .pytest_cache/
+
+app/static/uploads/

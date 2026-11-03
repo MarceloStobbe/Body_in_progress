@@ -7,7 +7,7 @@ db = SQLAlchemy()
 def create_app(test_config=None):
     app = Flask(__name__)
     
-    app.config.setdefault('SECRET_KEY', 'body-in-progress-elite-secure-key')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'body-in-progress-elite-secure-key'
     
     database_url = os.environ.get('DATABASE_URL')
     if database_url and database_url.startswith("postgres://"):

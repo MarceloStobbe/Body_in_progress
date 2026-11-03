@@ -11,26 +11,34 @@
 <div class="row justify-content-center pb-5 mb-5">
     <div class="col-lg-6 col-md-8">
 
-        <div class="d-flex overflow-auto py-3 px-2 mb-4 rounded-4 shadow-sm align-items-center gap-3 no-scrollbar" id="stories-bar" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08);">
+        <div class="d-flex overflow-auto py-3 px-2 mb-4 rounded-4 shadow-sm align-items-center gap-3 no-scrollbar"
+            id="stories-bar" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08);">
             <div class="text-center flex-shrink-0" style="cursor: pointer;" onclick="openStoryModal()">
-                <div class="position-relative rounded-circle p-1 d-flex align-items-center justify-content-center mx-auto mb-1" style="width: 64px; height: 64px; border: 2px dashed var(--accent-color);">
+                <div class="position-relative rounded-circle p-1 d-flex align-items-center justify-content-center mx-auto mb-1"
+                    style="width: 64px; height: 64px; border: 2px dashed var(--accent-color);">
                     {% if user_profile_photo %}
-                        <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}" alt="Story" class="rounded-circle w-100 h-100 object-fit-cover">
+                    <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}"
+                        alt="Story" class="rounded-circle w-100 h-100 object-fit-cover">
                     {% else %}
-                        <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center text-light fw-bold" style="background-color: #222; color: var(--accent-color) !important;">{{ (user_name if user_name and user_name != "User" else "Marcelo Stobbe")[0] }}</div>
+                    <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center text-light fw-bold"
+                        style="background-color: #222; color: var(--accent-color) !important;">{{ (user_name if
+                        user_name and user_name != "User" else "Marcelo Stobbe")[0] }}</div>
                     {% endif %}
-                    <div class="position-absolute bottom-0 end-0 rounded-circle bg-dark d-flex align-items-center justify-content-center text-light" style="width: 20px; height: 20px; border: 2px solid var(--bg-card);">
+                    <div class="position-absolute bottom-0 end-0 rounded-circle bg-dark d-flex align-items-center justify-content-center text-light"
+                        style="width: 20px; height: 20px; border: 2px solid var(--bg-card);">
                         <i class="bi bi-plus" style="font-size: 0.8rem; color: var(--accent-color);"></i>
                     </div>
                 </div>
-                <small class="text-truncate d-block" style="font-size: 0.75rem; max-width: 64px; color: var(--text-main);">Your Story</small>
+                <small class="text-truncate d-block"
+                    style="font-size: 0.75rem; max-width: 64px; color: var(--text-main);">Your Story</small>
             </div>
         </div>
 
         <div id="feed-container">
             <div id="noPostsYetMessage" class="text-center py-5 text-muted">
                 <i class="bi bi-camera fs-1 d-block mb-2" style="color: var(--accent-color); opacity: 0.5;"></i>
-                <p class="small" style="color: var(--text-muted);">No posts in your feed yet. Create your first publication using the button below!</p>
+                <p class="small" style="color: var(--text-muted);">No posts in your feed yet. Create your first
+                    publication using the button below!</p>
             </div>
         </div>
     </div>
@@ -38,17 +46,29 @@
 
 <div class="fixed-bottom pointer-events-none" style="bottom: 80px; z-index: 1030;">
     <div class="container d-flex justify-content-center">
-        <div class="d-flex align-items-center gap-3 p-2 rounded-pill shadow-lg pointer-events-auto" style="background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);">
-            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm" style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);" onclick="switchTab('home')" title="All Feed Posts">
+        <div class="d-flex align-items-center gap-3 p-2 rounded-pill shadow-lg pointer-events-auto"
+            style="background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);">
+            <button
+                class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
+                style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
+                onclick="switchTab('home')" title="All Feed Posts">
                 <i class="bi bi-house-door-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
-            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm" style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);" onclick="switchTab('following')" title="Following Posts & Stories">
+            <button
+                class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
+                style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
+                onclick="switchTab('following')" title="Following Posts & Stories">
                 <i class="bi bi-people-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
-            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 50px; height: 50px; background-color: var(--accent-color); border: none;" onclick="openFeedModal()" title="Create Feed Post">
+            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm"
+                style="width: 50px; height: 50px; background-color: var(--accent-color); border: none;"
+                onclick="openFeedModal()" title="Create Feed Post">
                 <i class="bi bi-plus-lg fs-4 text-dark fw-bold"></i>
             </button>
-            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm" style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);" onclick="switchTab('activity')" title="My Activity & Interactions">
+            <button
+                class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
+                style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
+                onclick="switchTab('activity')" title="My Activity & Interactions">
                 <i class="bi bi-person-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
         </div>
@@ -57,68 +77,104 @@
 
 <div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content text-light border-secondary shadow-lg rounded-4" style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
+        <div class="modal-content text-light border-secondary shadow-lg rounded-4"
+            style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title fw-bold" id="modalHeaderTitle" style="color: var(--accent-color);">Create New Publication</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="modalHeaderTitle" style="color: var(--accent-color);">Create New
+                    Publication</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="postForm" onsubmit="handlePostSubmit(event)">
                     <div class="row">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <div class="mb-3">
-                                <label for="mediaInput" class="form-label small fw-semibold" style="color: var(--text-main);"><i class="bi bi-film me-1" style="color: var(--accent-color);"></i> Attach Photo or Video <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control text-light border-secondary" id="mediaInput" name="media_file" accept="image/*,video/*" onchange="previewMedia(event)" style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
+                                <label for="mediaInput" class="form-label small fw-semibold"
+                                    style="color: var(--text-main);"><i class="bi bi-film me-1"
+                                        style="color: var(--accent-color);"></i> Attach Photo or Video <span
+                                        class="text-danger">*</span></label>
+                                <input type="file" class="form-control text-light border-secondary" id="mediaInput"
+                                    name="media_file" accept="image/*,video/*" onchange="previewMedia(event)"
+                                    style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
                             </div>
                             <div class="mb-3 d-none" id="cropControls">
-                                <label class="form-label small d-flex align-items-center justify-content-between" style="color: var(--text-main);">
-                                    <span><i class="bi bi-arrows-move me-1" style="color: var(--accent-color);"></i> Adjust Position & Zoom</span>
+                                <label class="form-label small d-flex align-items-center justify-content-between"
+                                    style="color: var(--text-main);">
+                                    <span><i class="bi bi-arrows-move me-1" style="color: var(--accent-color);"></i>
+                                        Adjust Position & Zoom</span>
                                     <span id="zoomVal" style="color: var(--accent-color);">100%</span>
                                 </label>
-                                <input type="range" class="form-range" id="zoomRange" min="100" max="250" value="100" oninput="applyMediaTransform()">
-                                <small class="d-block" style="font-size: 0.72rem; color: var(--text-muted);"><i class="bi bi-info-circle me-1"></i> Drag media in the preview box to reposition.</small>
+                                <input type="range" class="form-range" id="zoomRange" min="100" max="250" value="100"
+                                    oninput="applyMediaTransform()">
+                                <small class="d-block" style="font-size: 0.72rem; color: var(--text-muted);"><i
+                                        class="bi bi-info-circle me-1"></i> Drag media in the preview box to
+                                    reposition.</small>
                             </div>
                             <div class="mb-3 d-none" id="muteVideoOption">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="muteVideoSwitch" checked onchange="toggleVideoMute()">
-                                    <label class="form-check-label small" for="muteVideoSwitch" style="color: var(--text-main);"><i class="bi bi-volume-mute me-1"></i> Mute original video audio</label>
+                                    <input class="form-check-input" type="checkbox" id="muteVideoSwitch" checked
+                                        onchange="toggleVideoMute()">
+                                    <label class="form-check-label small" for="muteVideoSwitch"
+                                        style="color: var(--text-main);"><i class="bi bi-volume-mute me-1"></i> Mute
+                                        original video audio</label>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold" style="color: var(--text-main);"><i class="bi bi-music-note-beamed me-1" style="color: var(--accent-color);"></i> Background Music / Track</label>
-                                <select class="form-select text-light border-secondary" id="musicSelect" onchange="updatePreview()" style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
-                                    <option value="">No Background Music</option>
-                                    <option value="EDM Workout Power">EDM Workout Power</option>
-                                    <option value="Lofi Gym Focus Beats">Lofi Gym Focus Beats</option>
-                                    <option value="Motivation Speech">Motivation Speech</option>
-                                    <option value="Phonk Training Energy">Phonk Training Energy</option>
-                                    <option value="Hardstyle Beast Mode">Hardstyle Beast Mode</option>
-                                </select>
+                            <div class="mb-3 position-relative">
+                                <label for="musicSearchInput" class="form-label small fw-semibold"
+                                    style="color: var(--text-main);"><i class="bi bi-music-note-beamed me-1"
+                                        style="color: var(--accent-color);"></i> Search Song / Famous Artist</label>
+                                <input type="text" class="form-control text-light border-secondary"
+                                    id="musicSearchInput"
+                                    placeholder="Type song or artist (e.g., The Weeknd - Blinding Lights)"
+                                    oninput="searchMusicTracks(this.value)" autocomplete="off"
+                                    style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
+                                <div id="musicSearchResults"
+                                    class="list-group position-absolute w-100 shadow-lg d-none z-3 mt-1"
+                                    style="max-height: 180px; overflow-y: auto;"></div>
                             </div>
                             <div class="mb-3">
-                                <label for="captionInput" class="form-label small fw-semibold" style="color: var(--text-main);">Caption / Thoughts</label>
-                                <textarea class="form-control text-light border-secondary" id="captionInput" name="caption" rows="3" placeholder="What's on your mind regarding your fitness journey?" style="resize: none; background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;" oninput="updatePreview()"></textarea>
+                                <label for="captionInput" class="form-label small fw-semibold"
+                                    style="color: var(--text-main);">Caption / Thoughts</label>
+                                <textarea class="form-control text-light border-secondary" id="captionInput"
+                                    name="caption" rows="3"
+                                    placeholder="What's on your mind regarding your fitness journey?"
+                                    style="resize: none; background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;"
+                                    oninput="updatePreview()"></textarea>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <span class="d-block small mb-2 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Live Preview</span>
-                            <div class="card rounded-4 border-secondary overflow-hidden shadow-sm" style="background-color: var(--bg-card); color: var(--text-main);">
-                                <div class="p-2 d-flex align-items-center justify-content-between border-bottom border-secondary">
+                            <span class="d-block small mb-2 text-uppercase fw-bold"
+                                style="font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Live
+                                Preview</span>
+                            <div class="card rounded-4 border-secondary overflow-hidden shadow-sm"
+                                style="background-color: var(--bg-card); color: var(--text-main);">
+                                <div
+                                    class="p-2 d-flex align-items-center justify-content-between border-bottom border-secondary">
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem; border: 1.5px solid var(--accent-color); color: var(--text-main);">
+                                        <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center fw-bold"
+                                            style="width: 32px; height: 32px; font-size: 0.8rem; border: 1.5px solid var(--accent-color); color: var(--text-main);">
                                             {% if user_profile_photo %}
-                                                <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}" alt="Profile" class="w-100 h-100 object-fit-cover">
+                                            <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}"
+                                                alt="Profile" class="w-100 h-100 object-fit-cover">
                                             {% else %}
-                                                <span style="color: var(--accent-color);">{{ (user_name if user_name and user_name != "User" else "Marcelo Stobbe")[0] }}</span>
+                                            <span style="color: var(--accent-color);">{{ (user_name if user_name and
+                                                user_name != "User" else "Marcelo Stobbe")[0] }}</span>
                                             {% endif %}
                                         </div>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-bold" style="font-size: 0.8rem; color: var(--text-main);">{{ user_name if user_name and user_name != "User" else "Marcelo Stobbe" }}</span>
-                                            <small id="previewMusic" style="font-size: 0.65rem; color: var(--accent-color) !important;">Preview Mode</small>
+                                            <span class="fw-bold" style="font-size: 0.8rem; color: var(--text-main);">{{
+                                                user_name if user_name and user_name != "User" else "Marcelo Stobbe"
+                                                }}</span>
+                                            <small id="previewMusic"
+                                                style="font-size: 0.65rem; color: var(--accent-color) !important;">Preview
+                                                Mode</small>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="previewContainer" class="bg-black d-flex align-items-center justify-content-center overflow-hidden position-relative" style="height: 280px; font-size: 0.8rem; cursor: grab; color: var(--text-muted);">
+                                <div id="previewContainer"
+                                    class="bg-black d-flex align-items-center justify-content-center overflow-hidden position-relative w-100"
+                                    style="aspect-ratio: 1 / 1; font-size: 0.8rem; cursor: grab; color: var(--text-muted);">
                                     No photo or video selected
                                 </div>
                                 <div class="p-2">
@@ -127,12 +183,15 @@
                                         <i class="bi bi-chat" style="color: var(--accent-color);"></i>
                                         <i class="bi bi-bookmark ms-auto"></i>
                                     </div>
-                                    <div class="small" id="previewCaption" style="font-size: 0.8rem; color: var(--text-main);"></div>
+                                    <div class="small" id="previewCaption"
+                                        style="font-size: 0.8rem; color: var(--text-main);"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <button type="submit" id="submitBtnText" class="btn w-100 fw-bold text-uppercase py-2 mt-3 rounded-pill shadow-sm" style="background-color: var(--accent-color); color: #111; font-size: 0.85rem;">
+                    <button type="submit" id="submitBtnText"
+                        class="btn w-100 fw-bold text-uppercase py-2 mt-3 rounded-pill shadow-sm"
+                        style="background-color: var(--accent-color); color: #111; font-size: 0.85rem;">
                         Publish to BIP
                     </button>
                 </form>
@@ -143,51 +202,71 @@
 
 <div class="modal fade" id="storyViewerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-        <div class="modal-content bg-black text-light border-0 shadow-lg position-relative rounded-4 overflow-hidden" style="width: 380px; height: 600px; margin: auto;">
-            <div class="position-absolute top-0 start-0 end-0 p-3 z-3" style="background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);">
+        <div class="modal-content bg-black text-light border-0 shadow-lg position-relative rounded-4 overflow-hidden"
+            style="width: 380px; height: 600px; margin: auto;">
+            <div class="position-absolute top-0 start-0 end-0 p-3 z-3"
+                style="background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle overflow-hidden border border-light" style="width: 32px; height: 32px;">
+                        <div class="rounded-circle overflow-hidden border border-light"
+                            style="width: 32px; height: 32px;">
                             <div id="viewerUserAvatarContainer" class="w-100 h-100">
                                 {% if user_profile_photo %}
-                                    <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}" alt="User" class="w-100 h-100 object-fit-cover">
+                                <img src="{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}"
+                                    alt="User" class="w-100 h-100 object-fit-cover">
                                 {% else %}
-                                    <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-xs text-light">{{ (user_name if user_name and user_name != "User" else "Marcelo Stobbe")[0] }}</div>
+                                <div
+                                    class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-xs text-light">
+                                    {{ (user_name if user_name and user_name != "User" else "Marcelo Stobbe")[0] }}
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
-                        <span class="fw-bold small text-light" id="viewerUsernameText">{{ user_name if user_name and user_name != "User" else "Marcelo Stobbe" }}</span>
+                        <span class="fw-bold small text-light" id="viewerUsernameText">{{ user_name if user_name and
+                            user_name != "User" else "Marcelo Stobbe" }}</span>
                         <span class="text-muted small" style="font-size: 0.7rem;">Just now</span>
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <div class="dropdown">
-                            <button class="btn btn-link text-light p-0 text-decoration-none dropdown-toggle-no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Options">
+                            <button class="btn btn-link text-light p-0 text-decoration-none dropdown-toggle-no-caret"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Options">
                                 <i class="bi bi-three-dots-vertical fs-5"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow border-secondary">
                                 <li>
-                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2" onclick="confirmDeleteStory()">
+                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                        onclick="confirmDeleteStory()">
                                         <i class="bi bi-trash"></i> Delete Story
                                     </button>
                                 </li>
                             </ul>
                         </div>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                 </div>
             </div>
-            <div class="modal-body p-0 d-flex align-items-center justify-content-center position-relative h-100 bg-dark">
-                <div id="storyMediaContent" class="w-100 h-100 d-flex align-items-center justify-content-center position-relative overflow-hidden" style="color: var(--text-muted);">
+            <div
+                class="modal-body p-0 d-flex align-items-center justify-content-center position-relative h-100 bg-dark">
+                <div id="storyMediaContent"
+                    class="w-100 h-100 d-flex align-items-center justify-content-center position-relative overflow-hidden"
+                    style="color: var(--text-muted);">
                     <span class="small">Loading story...</span>
                 </div>
-                <div id="storyFooterContent" class="position-absolute bottom-0 start-0 end-0 p-3 z-3 text-center" style="background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: none;">
+                <div id="storyFooterContent" class="position-absolute bottom-0 start-0 end-0 p-3 z-3 text-center"
+                    style="background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: none;">
                     <div id="storyCaptionText" class="text-light small mb-1" style="font-size: 0.85rem;"></div>
-                    <div id="storyMusicText" class="small" style="font-size: 0.7rem; color: var(--accent-color) !important;"></div>
+                    <div id="storyMusicText" class="small"
+                        style="font-size: 0.7rem; color: var(--accent-color) !important;"></div>
                 </div>
-                <button class="btn position-absolute start-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle ms-2 d-flex align-items-center justify-content-center z-3" style="width: 40px; height: 40px; border: none;" onclick="prevStory()" title="Previous Story">
+                <button
+                    class="btn position-absolute start-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle ms-2 d-flex align-items-center justify-content-center z-3"
+                    style="width: 40px; height: 40px; border: none;" onclick="prevStory()" title="Previous Story">
                     <i class="bi bi-chevron-left fs-5"></i>
                 </button>
-                <button class="btn position-absolute end-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle me-2 d-flex align-items-center justify-content-center z-3" style="width: 40px; height: 40px; border: none;" onclick="nextStory()" title="Next Story">
+                <button
+                    class="btn position-absolute end-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle me-2 d-flex align-items-center justify-content-center z-3"
+                    style="width: 40px; height: 40px; border: none;" onclick="nextStory()" title="Next Story">
                     <i class="bi bi-chevron-right fs-5"></i>
                 </button>
             </div>
@@ -197,15 +276,20 @@
 
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-        <div class="modal-content shadow-lg rounded-4 p-4 text-center border-secondary" style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
-            <div class="mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: rgba(220, 53, 69, 0.15); border: 1px solid rgba(220, 53, 69, 0.3);">
+        <div class="modal-content shadow-lg rounded-4 p-4 text-center border-secondary"
+            style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
+            <div class="mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 50px; height: 50px; background-color: rgba(220, 53, 69, 0.15); border: 1px solid rgba(220, 53, 69, 0.3);">
                 <i class="bi bi-trash3-fill text-danger fs-4"></i>
             </div>
             <h5 class="fw-bold mb-2" id="confirmDeleteTitle" style="color: var(--text-main) !important;">Delete</h5>
-            <p class="small mb-4" id="confirmDeleteText" style="color: var(--text-muted) !important; line-height: 1.5;">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <p class="small mb-4" id="confirmDeleteText" style="color: var(--text-muted) !important; line-height: 1.5;">
+                Are you sure you want to delete this item? This action cannot be undone.</p>
             <div class="d-flex gap-2 justify-content-center">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-50 rounded-pill py-2 border-secondary" data-bs-dismiss="modal" style="color: var(--text-main) !important;">Cancel</button>
-                <button type="button" id="confirmDeleteBtn" class="btn btn-sm w-50 rounded-pill py-2 fw-bold text-dark" style="background-color: var(--accent-color);" onclick="executeDelete()">Delete</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm w-50 rounded-pill py-2 border-secondary"
+                    data-bs-dismiss="modal" style="color: var(--text-main) !important;">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-sm w-50 rounded-pill py-2 fw-bold text-dark"
+                    style="background-color: var(--accent-color);" onclick="executeDelete()">Delete</button>
             </div>
         </div>
     </div>
@@ -213,13 +297,17 @@
 
 <div class="modal fade" id="validationAlertModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-        <div class="modal-content shadow-lg rounded-4 p-4 text-center border-secondary" style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
-            <div class="mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.3);">
+        <div class="modal-content shadow-lg rounded-4 p-4 text-center border-secondary"
+            style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
+            <div class="mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 50px; height: 50px; background-color: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.3);">
                 <i class="bi bi-exclamation-triangle-fill fs-4" style="color: var(--accent-color);"></i>
             </div>
             <h5 class="fw-bold mb-2" style="color: var(--text-main) !important;">Media Required</h5>
-            <p class="small mb-4" style="color: var(--text-muted) !important; line-height: 1.5;">Please select a photo or video file to publish your content.</p>
-            <button type="button" class="btn btn-sm w-100 rounded-pill py-2 fw-bold text-dark" style="background-color: var(--accent-color);" data-bs-dismiss="modal">Got it</button>
+            <p class="small mb-4" style="color: var(--text-muted) !important; line-height: 1.5;">Please select a photo
+                or video file to publish your content.</p>
+            <button type="button" class="btn btn-sm w-100 rounded-pill py-2 fw-bold text-dark"
+                style="background-color: var(--accent-color);" data-bs-dismiss="modal">Got it</button>
         </div>
     </div>
 </div>

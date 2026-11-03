@@ -7,29 +7,24 @@ from app.models import Post, Story, User
 
 main_bp = Blueprint('main', __name__)
 
-def get_latest_profile_photo():
-    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_photos')
-    if os.path.exists(upload_folder):
-        files = [f for f in os.listdir(upload_folder) if f.lower().endswith(('png', 'jpg', 'jpeg', 'gif', 'webp'))]
-        if files:
-            files.sort(key=lambda x: os.path.getmtime(os.path.join(upload_folder, x)), reverse=True)
-            return files[0]
+def get_current_user():
+    user_id = session.get('user_id')
+    if user_id:
+        return User.query.get(user_id)
     return None
 
 def get_current_user_name(first_name_only=True):
-    full_name = 'User'
-    
-    if 'user_name' in session and session['user_name'] and session['user_name'] != 'User':
+    user = get_current_user()
+    if user and hasattr(user, 'username') and user.username:
+        full_name = user.username
+    elif user and hasattr(user, 'name') and user.name:
+        full_name = user.name
+    elif 'user_name' in session and session['user_name']:
         full_name = session['user_name']
-    elif 'name' in session and session['name'] and session['name'] != 'User':
+    elif 'name' in session and session['name']:
         full_name = session['name']
     else:
-        db_user = User.query.first()
-        if db_user:
-            if hasattr(db_user, 'username') and db_user.username:
-                full_name = db_user.username
-            elif hasattr(db_user, 'name') and db_user.name:
-                full_name = db_user.name
+        full_name = 'User'
 
     if first_name_only and full_name and full_name != 'User':
         return full_name.split()[0]
@@ -38,45 +33,57 @@ def get_current_user_name(first_name_only=True):
 
 @main_bp.route('/')
 def index():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('index.html', user_profile_photo=profile_photo, is_logged_in=False, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('index.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/dashboard')
 def dashboard():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_first_name = get_current_user_name(first_name_only=True)
+    is_logged_in = user is not None
     
     return render_template(
         'dashboard.html', 
         user_profile_photo=profile_photo, 
-        is_logged_in=True,
+        is_logged_in=is_logged_in,
         user_name=user_first_name
     )
 
 @main_bp.route('/workout')
 def workout():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('workout.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('workout.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/sleep')
 def sleep():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('sleep.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('sleep.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/body')
 def body():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('body.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('body.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/water', methods=['GET', 'POST'])
 def water():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
     hydration_active = True  
+    is_logged_in = user is not None
     
     if request.method == 'POST':
         opt_in = request.form.get('hydration_opt_in')
@@ -86,7 +93,7 @@ def water():
         flash('Hydration preferences saved successfully!', 'success')
         return redirect(url_for('main.water'))
         
-    return render_template('water.html', user_profile_photo=profile_photo, hydration_active=hydration_active, is_logged_in=True, user_name=user_name)
+    return render_template('water.html', user_profile_photo=profile_photo, hydration_active=hydration_active, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/water/log', methods=['POST'])
 def log_water():
@@ -98,20 +105,26 @@ def log_water():
 
 @main_bp.route('/progress')
 def progress():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('progress.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('progress.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/playlist')
 def playlist():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('playlist.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    is_logged_in = user is not None
+    return render_template('playlist.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/bip', methods=['GET', 'POST'])
 def bip():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
+    is_logged_in = user is not None
     
     db_posts = Post.query.order_by(Post.created_at.desc()).all()
     db_stories = Story.query.order_by(Story.created_at.desc()).all()
@@ -122,7 +135,7 @@ def bip():
     return render_template(
         'bip.html', 
         user_profile_photo=profile_photo, 
-        is_logged_in=True, 
+        is_logged_in=is_logged_in, 
         user_name=user_name,
         posts=posts_data,
         stories=stories_data
@@ -135,6 +148,7 @@ def handle_bip_posts():
         media_file = request.files.get('media_file')
         caption = request.form.get('caption', '')
         music = request.form.get('music', '')
+        music_preview_url = request.form.get('music_preview_url', '') 
         is_muted = request.form.get('is_muted') == 'true'
         
         if not media_file or media_file.filename == '':
@@ -155,6 +169,7 @@ def handle_bip_posts():
             is_video=is_video,
             caption=caption,
             music=music,
+            music_preview_url=music_preview_url, 
             is_muted=is_muted
         )
         db.session.add(new_post)
@@ -178,6 +193,7 @@ def handle_bip_stories():
         media_file = request.files.get('media_file')
         caption = request.form.get('caption', '')
         music = request.form.get('music', '')
+        music_preview_url = request.form.get('music_preview_url', '') 
         is_muted = request.form.get('is_muted') == 'true'
         
         if not media_file or media_file.filename == '':
@@ -198,6 +214,7 @@ def handle_bip_stories():
             is_video=is_video,
             caption=caption,
             music=music,
+            music_preview_url=music_preview_url, 
             is_muted=is_muted
         )
         db.session.add(new_story)
@@ -216,63 +233,149 @@ def delete_bip_story(story_id):
 
 @main_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
-    user_name = get_current_user_name()
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('main.login'))
+        
+    section = request.args.get('section', '')
+    show_password_only = section == 'password' or (request.referrer and 'password-section' in request.referrer)
+    
     if request.method == 'POST':
         if 'current_password' in request.form:
-            flash('Password updated successfully!', 'success')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if new_password and new_password == confirm_password:
+                if hasattr(user, 'set_password'):
+                    user.set_password(new_password)
+                elif hasattr(user, 'password_hash'):
+                    user.password_hash = new_password
+                elif hasattr(user, 'password'):
+                    user.password = new_password
+                db.session.commit()
+                flash('Password updated successfully!', 'success')
+            else:
+                flash('Passwords do not match.', 'danger')
+                return redirect(url_for('main.profile', section='password'))
         else:
             new_name = request.form.get('name') or request.form.get('username')
             if new_name:
+                if hasattr(user, 'username'):
+                    user.username = new_name
+                elif hasattr(user, 'name'):
+                    user.name = new_name
                 session['user_name'] = new_name
                 session['name'] = new_name
             
-            birth_date = request.form.get('birth_date')
-            weight = request.form.get('weight')
+            birth_date_str = request.form.get('birth_date')
+            if birth_date_str and hasattr(user, 'birth_date'):
+                try:
+                    user.birth_date = date.fromisoformat(birth_date_str)
+                except ValueError:
+                    user.birth_date = None
+            
             height_str = request.form.get('height', '').replace(',', '.')
-            height = float(height_str) if height_str else None
+            if hasattr(user, 'height'):
+                user.height = float(height_str) if height_str else None
             
             photo = request.files.get('profile_photo')
             if photo and photo.filename != '':
                 filename = secure_filename(photo.filename)
+                unique_filename = f"user_{user.id}_{filename}"
                 
                 upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_photos')
                 os.makedirs(upload_folder, exist_ok=True)
                 
-                photo_path = os.path.join(upload_folder, filename)
+                photo_path = os.path.join(upload_folder, unique_filename)
                 photo.save(photo_path)
+                
+                user.profile_photo = unique_filename
             
-            flash('Profile information updated successfully!', 'success')
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
             
-        return redirect(url_for('main.profile'))
+        return redirect(url_for('main.dashboard'))
         
-    profile_photo = get_latest_profile_photo()
+    profile_photo = user.profile_photo if hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    return render_template('profile.html', user_profile_photo=profile_photo, is_logged_in=True, user_name=user_name)
+    return render_template(
+        'profile.html', 
+        user=user,
+        user_profile_photo=profile_photo, 
+        is_logged_in=True, 
+        user_name=user_name,
+        show_password_only=show_password_only,
+        hasattr=hasattr
+    )
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    profile_photo = get_latest_profile_photo()
-    user_name = get_current_user_name()
     if request.method == 'POST':
-        session['user_name'] = 'Marcelo Stobbe'
-        session['name'] = 'Marcelo Stobbe'
-        flash('Login successful!', 'success')
-        return redirect(url_for('main.dashboard'))
-    return render_template('login.html', user_profile_photo=profile_photo, is_logged_in=False, user_name=user_name)
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
+        
+        if user and (hasattr(user, 'check_password') and user.check_password(password) or getattr(user, 'password_hash', None) == password or getattr(user, 'password', None) == password):
+            session['user_id'] = user.id
+            session['user_name'] = user.username if hasattr(user, 'username') else getattr(user, 'name', 'User')
+            session['name'] = session['user_name']
+            flash('Login successful!', 'success')
+            return redirect(url_for('main.dashboard'))
+        else:
+            flash('Invalid email or password.', 'danger')
+            return redirect(url_for('main.login'))
+            
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
+    user_name = get_current_user_name()
+    is_logged_in = user is not None
+    return render_template('login.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    profile_photo = get_latest_profile_photo()
-    user_name = get_current_user_name()
     if request.method == 'POST':
-        session['user_name'] = 'Marcelo Stobbe'
-        session['name'] = 'Marcelo Stobbe'
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already registered.', 'danger')
+            return redirect(url_for('main.login'))
+            
+        user_kwargs = {'email': email}
+        if hasattr(User, 'username'):
+            user_kwargs['username'] = name
+        elif hasattr(User, 'name'):
+            user_kwargs['name'] = name
+            
+        new_user = User(**user_kwargs)
+        if hasattr(new_user, 'set_password'):
+            new_user.set_password(password)
+        elif hasattr(new_user, 'password_hash'):
+            new_user.password_hash = password
+        elif hasattr(new_user, 'password'):
+            new_user.password = password
+            
+        db.session.add(new_user)
+        db.session.commit()
+        
+        session['user_id'] = new_user.id
+        session['user_name'] = name
+        session['name'] = name
+        
         flash('Registration successful!', 'success')
-        return redirect(url_for('main.dashboard'))
-    return render_template('login.html', user_profile_photo=profile_photo, is_logged_in=False, user_name=user_name)
+        return redirect(url_for('main.profile'))
+        
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
+    user_name = get_current_user_name()
+    is_logged_in = user is not None
+    return render_template('login.html', user_profile_photo=profile_photo, is_logged_in=is_logged_in, user_name=user_name)
 
 @main_bp.route('/logout')
 def logout():
+    session.pop('user_id', None)
     session.pop('user_name', None)
     session.pop('name', None)
     flash('You have successfully logged out of your account.', 'info')
@@ -280,16 +383,10 @@ def logout():
 
 @main_bp.route('/terms')
 def terms():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    
-    is_logged_in = 'user_id' in session or 'user' in session or session.get('logged_in') == True
-
-    referrer = request.referrer or ''
-    
-    if not is_logged_in and referrer:
-        if any(page in referrer for page in ['/dashboard', '/workout', '/sleep', '/body', '/water', '/progress', '/playlist', '/bip', '/profile']):
-            is_logged_in = True
+    is_logged_in = user is not None or 'user_id' in session or 'user' in session or session.get('logged_in') == True
 
     return render_template('terms.html', 
                            user_profile_photo=profile_photo, 
@@ -298,16 +395,10 @@ def terms():
 
 @main_bp.route('/privacy')
 def privacy():
-    profile_photo = get_latest_profile_photo()
+    user = get_current_user()
+    profile_photo = user.profile_photo if user and hasattr(user, 'profile_photo') else None
     user_name = get_current_user_name()
-    
-    is_logged_in = 'user_id' in session or 'user' in session or session.get('logged_in') == True
-    
-    referrer = request.referrer or ''
-    
-    if not is_logged_in and referrer:
-        if any(page in referrer for page in ['/dashboard', '/workout', '/sleep', '/body', '/water', '/progress', '/playlist', '/bip', '/profile']):
-            is_logged_in = True
+    is_logged_in = user is not None or 'user_id' in session or 'user' in session or session.get('logged_in') == True
 
     return render_template('privacy.html', 
                            user_profile_photo=profile_photo, 

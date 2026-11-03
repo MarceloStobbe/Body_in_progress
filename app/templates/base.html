@@ -13,7 +13,7 @@
     <header class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
         <div class="container">
             <div class="d-flex align-items-center justify-content-between w-100 px-2 px-sm-0">
-                <a class="navbar-brand fw-bold fs-4 text-decoration-none m-0" href="{{ url_for('main.index') }}">
+                <a class="navbar-brand fw-bold fs-4 text-decoration-none m-0" href="{{ url_for('main.dashboard') if is_logged_in else url_for('main.index') }}">
                     <span class="d-inline d-sm-none" style="color: var(--accent-color);">BIP</span>
                     <span class="d-none d-sm-inline">BODY IN <span style="color: var(--accent-color);">PROGRESS</span></span>
                 </a>
@@ -72,7 +72,7 @@
                                 <li><hr class="dropdown-divider border-secondary"></li>
                                 
                                 <li><a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('main.profile') }}"><i class="bi bi-person-gear"></i> Edit Profile</a></li>
-                                <li><a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('main.profile') }}#password-section"><i class="bi bi-key"></i> Edit Password</a></li>
+                                <li><a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('main.profile', section='password') }}"><i class="bi bi-key"></i> Edit Password</a></li>
                                 
                                 <li><hr class="dropdown-divider border-secondary"></li>
                                 
@@ -80,7 +80,7 @@
                             </ul>
                         </div>
                     {% else %}
-                        <a href="{{ url_for('main.login') }}" class="btn btn-sm px-4 py-1.5 rounded-pill fw-bold shadow-sm" style="background-color: var(--accent-color); color: #111;">
+                        <a href="{{ url_for('main.login') }}" class="btn btn-sm px-3 py-2 rounded-pill fw-bold shadow-sm text-uppercase" style="background-color: var(--accent-color); color: #111; font-size: 0.85rem; letter-spacing: 0.5px;">
                             <i class="bi bi-box-arrow-in-right me-1"></i> Login / Register
                         </a>
                     {% endif %}
@@ -89,7 +89,7 @@
         </div>
     </header>
 
-    <main class="flex-shrink-0 my-4">
+    <main class="flex-shrink-0 py-4">
         <div class="container">
             {% block content %}{% endblock %}
         </div>

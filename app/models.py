@@ -9,6 +9,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     
+    birth_date = db.Column(db.Date, nullable=True)
+    height = db.Column(db.Float, nullable=True)
+    
     profile_photo = db.Column(db.String(255), nullable=True)
     
     theme_preference = db.Column(db.String(30), default='gold', nullable=False)
@@ -97,6 +100,7 @@ class Post(db.Model):
     is_video = db.Column(db.Boolean, default=False)
     caption = db.Column(db.Text, nullable=True)
     music = db.Column(db.String(100), nullable=True)
+    music_preview_url = db.Column(db.String(255), nullable=True)  
     is_muted = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -108,6 +112,7 @@ class Post(db.Model):
             "is_video": self.is_video,
             "caption": self.caption or "",
             "music": self.music or "",
+            "music_preview_url": self.music_preview_url or "", 
             "is_muted": self.is_muted,
             "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
@@ -121,8 +126,9 @@ class Story(db.Model):
     author_name = db.Column(db.String(100), nullable=False, default='Marcelo Stobbe')
     media_url = db.Column(db.String(255), nullable=False)
     is_video = db.Column(db.Boolean, default=False)
-    caption = db.Column(db.Text, nullable=True)
+    caption = db.Column(db.String(255), nullable=True)
     music = db.Column(db.String(100), nullable=True)
+    music_preview_url = db.Column(db.String(255), nullable=True)  
     is_muted = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -134,6 +140,7 @@ class Story(db.Model):
             "is_video": self.is_video,
             "caption": self.caption or "",
             "music": self.music or "",
+            "music_preview_url": self.music_preview_url or "",  
             "is_muted": self.is_muted,
             "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
