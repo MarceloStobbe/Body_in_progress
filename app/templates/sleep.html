@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Body in Progress | Sleep & Recovery Monitor{% endblock %}
 {% block content %}
-<div class="row justify-content-center mb-4 pb-2">
+<div class="row justify-content-center mb-2 pb-1">
     <div class="col-lg-8 col-md-10 px-3" style="width: 100%; max-width: 800px; margin: 0 auto;">
         
         <div class="text-center mb-4">
@@ -12,7 +12,7 @@
             <p class="small theme-text-sub">Configure your target sleep hours, check-in schedules, and track your weekly recovery performance.</p>
         </div>
 
-        <div id="sleepConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4">
+        <div id="sleepConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3">
             <div class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
                 <div>
                     <h6 class="fw-bold mb-1 theme-text-title"><i class="bi bi-sliders me-2" style="color: var(--accent-color);"></i>Sleep Configuration Hub</h6>
@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        <div id="sleepIntakeContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+        <div id="sleepIntakeContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-plus-circle me-2" style="color: var(--accent-color);"></i>Log Sleep & Morning Status</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="openSleepConfigurationHub()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
@@ -90,7 +90,7 @@
             </div>
         </div>
 
-        <div id="sleepDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+        <div id="sleepDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up-arrow me-2" style="color: var(--accent-color);"></i>Today's Sleep Progress</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="openSleepConfigurationHub()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
@@ -136,9 +136,9 @@
             </div>
         </div>
 
-        <div id="sleepHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+        <div id="sleepHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-moon-stars me-2" style="color: var(--accent-color);"></i>7-Day Sleep Duration Trend (Oura Style)</h5>
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-moon-stars me-2" style="color: var(--accent-color);"></i>7-Day Sleep Duration Trend</h5>
             </div>
 
             <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
@@ -164,42 +164,22 @@
                         </div>
 
                         <svg id="sleepTrendSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 240" preserveAspectRatio="none">
-                            <polyline id="sleepTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="50,80 150,100 250,70 350,90 450,60 550,80 650,120" />
-                            
-                            <circle cx="50" cy="80" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText0" x="50" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.2h</text>
-                            <text id="sleepDayLabel0" x="50" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">7</text>
-
-                            <circle cx="150" cy="100" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText1" x="150" y="88" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">6.5h</text>
-                            <text id="sleepDayLabel1" x="150" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">8</text>
-
-                            <circle cx="250" cy="70" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText2" x="250" y="58" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.8h</text>
-                            <text id="sleepDayLabel2" x="250" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">9</text>
-
-                            <circle cx="350" cy="90" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText3" x="350" y="78" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.0h</text>
-                            <text id="sleepDayLabel3" x="350" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">10</text>
-
-                            <circle cx="450" cy="60" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText4" x="450" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">8.5h</text>
-                            <text id="sleepDayLabel4" x="450" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">11</text>
-
-                            <circle cx="550" cy="80" r="5" fill="var(--accent-color)" />
-                            <text id="sleepPointText5" x="550" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">7.2h</text>
-                            <text id="sleepDayLabel5" x="550" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">12</text>
-
-                            <circle id="sleepTodayCircle" cx="650" cy="120" r="6" fill="var(--bg-card, #1e1e1e)" stroke="var(--accent-color)" stroke-width="3" />
-                            <text id="sleepTodayText" x="650" y="108" fill="var(--accent-color)" font-size="11" font-weight="bold" text-anchor="middle">0.0h</text>
-                            <text id="sleepDayLabel6" x="650" y="225" fill="var(--accent-color)" font-size="12" font-weight="bold" text-anchor="middle">Today</text>
+                            <polyline id="sleepTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="sleepDynamicElements">
+                            </g>
                         </svg>
 
                     </div>
                 </div>
 
+                <div class="mt-2 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Duration Trend:</strong> This chart plots your recorded hours of sleep over the past 7 days on a continuous timeline. Data points are populated directly from your daily logs and check-ins, tracking consistency against a 12-hour maximum scale to help monitor sleep debt and recovery trends.
+                    </p>
+                </div>
+
                 <div class="mt-4 text-center">
-                    <p class="small theme-text-sub mb-1">7-day average sleep duration: <strong class="theme-text-title" id="avgSleepText">7.4 hrs</strong></p>
+                    <p class="small theme-text-sub mb-1">7-day average sleep duration: <strong class="theme-text-title" id="avgSleepText">0h 00m</strong></p>
                     <div id="sleepDurationMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
                         <i class="bi bi-award-fill me-1"></i> Consistent sleep duration maintained throughout the week!
                     </div>
@@ -207,9 +187,9 @@
             </div>
         </div>
 
-        <div id="sleepQualityHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-4 d-none">
+        <div id="sleepQualityHistoryView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-activity me-2" style="color: var(--accent-color);"></i>7-Day Sleep Quality & Recovery Trend (Oura Style)</h5>
+                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-activity me-2" style="color: var(--accent-color);"></i>7-Day Sleep Quality & Recovery Trend</h5>
             </div>
 
             <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
@@ -235,42 +215,22 @@
                         </div>
 
                         <svg id="qualityTrendSvgCanvas" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 240" preserveAspectRatio="none">
-                            <polyline id="qualityTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="50,60 150,80 250,50 350,70 450,40 550,60 650,100" />
-                            
-                            <circle cx="50" cy="60" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText0" x="50" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">85%</text>
-                            <text id="qualDayLabel0" x="50" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">7</text>
-
-                            <circle cx="150" cy="80" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText1" x="150" y="68" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">75%</text>
-                            <text id="qualDayLabel1" x="150" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">8</text>
-
-                            <circle cx="250" cy="50" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText2" x="250" y="38" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">90%</text>
-                            <text id="qualDayLabel2" x="250" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">9</text>
-
-                            <circle cx="350" cy="70" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText3" x="350" y="58" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">80%</text>
-                            <text id="qualDayLabel3" x="350" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">10</text>
-
-                            <circle cx="450" cy="40" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText4" x="450" y="28" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">95%</text>
-                            <text id="qualDayLabel4" x="450" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">11</text>
-
-                            <circle cx="550" cy="60" r="5" fill="var(--accent-color)" />
-                            <text id="qualPointText5" x="550" y="48" fill="currentColor" font-size="11" font-weight="bold" text-anchor="middle">85%</text>
-                            <text id="qualDayLabel5" x="550" y="225" fill="#a0aec0" font-size="12" font-weight="bold" text-anchor="middle">12</text>
-
-                            <circle id="qualityTodayCircle" cx="650" cy="100" r="6" fill="var(--bg-card, #1e1e1e)" stroke="var(--accent-color)" stroke-width="3" />
-                            <text id="qualityTodayText" x="650" y="88" fill="var(--accent-color)" font-size="11" font-weight="bold" text-anchor="middle">0%</text>
-                            <text id="qualDayLabel6" x="650" y="225" fill="var(--accent-color)" font-size="12" font-weight="bold" text-anchor="middle">Today</text>
+                            <polyline id="qualityTrendPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
+                            <g id="qualityDynamicElements">
+                            </g>
                         </svg>
 
                     </div>
                 </div>
 
-                <div class="mt-4 text-center">
-                    <p class="small theme-text-sub mb-1">7-day average recovery score: <strong class="theme-text-title" id="avgQualityText">85%</strong></p>
+                <div class="mt-2 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Recovery Trend:</strong> This chart visualizes your daily recovery and sleep quality percentage over the past 7 days. Scores are calculated automatically from your morning wake-up status (ranging from 45% for poor sleep to 95% for excellent rest) to evaluate overall physiological readiness.
+                    </p>
+                </div>
+
+               <div class="mt-4 text-center">
+                    <p class="small theme-text-sub mb-1">7-day average recovery score: <strong class="theme-text-title" id="avgQualityText">0%</strong></p>
                     <div id="sleepQualityMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
                         <i class="bi bi-award-fill me-1"></i> Excellent sleep quality and recovery performance!
                     </div>
@@ -278,7 +238,7 @@
             </div>
         </div>
 
-        <div id="sleepHistoryManagementContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
+        <div id="sleepHistoryManagementContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-2 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-calendar2-week me-2" style="color: var(--accent-color);"></i>Historical Sleep Logs & Management</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="toggleSleepLogsList()" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
@@ -330,36 +290,6 @@
                 <div id="sleepLoggedDatesContainer" class="d-flex flex-column gap-2 mb-3">
                 </div>
             </div>
-
-            <div id="sleepDateEditFormSection" class="d-none pt-3 border-top border-secondary mt-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Sleep Log for: <span id="sleepEditingDateTitle" class="theme-text-title">--</span></h6>
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteSleepLogEntry()" style="font-size: 0.8rem;">Delete Log</button>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="small theme-text-sub mb-1">Hours Slept</label>
-                        <select id="editSleepLogInput" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="small theme-text-sub mb-1">Wake Status</label>
-                        <select id="editWakeStatusSelect" class="form-select form-select-sm custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
-                            <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
-                            <option value="Rested & Good">Rested & Good (Good)</option>
-                            <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
-                            <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveEditedSleepLogEntry()" style="background-color: var(--accent-color); color: #111;">
-                        Save Changes
-                    </button>
-                </div>
-            </div>
         </div>
 
     </div>
@@ -380,8 +310,6 @@
         </div>
     </div>
 </div>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/sleep.css') }}">
 
 <script src="{{ url_for('static', filename='js/sleep.js') }}"></script>
 {% endblock %}

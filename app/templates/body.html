@@ -187,6 +187,12 @@
                     <span id="bmiStatusText" class="small fw-bold" style="color: var(--accent-color);">BMI Status: --</span>
                 </div>
 
+                <div class="mt-2 pt-2 border-top border-secondary mb-3">
+                    <p class="mb-0 theme-chart-desc text-light-adapt" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>BMI Calculation & Reference:</strong> Body Mass Index (BMI) is calculated as your weight in kilograms divided by the square of your height in meters ($\text{BMI} = \text{weight} / \text{height}^2$). It serves as a standard screening tool to categorize body weight status (Underweight, Normal, Overweight, Obese) based on general population metrics.
+                    </p>
+                </div>
+
                 <div class="small fw-bold px-3 py-2 rounded-3 text-center" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
                     <i class="bi bi-info-circle-fill me-1"></i> Note: BMI is a general reference standard. Your ideal body composition depends heavily on muscle mass gains, strength training regimen, and individual body structure.
                 </div>
@@ -212,6 +218,18 @@
                             <polyline id="weightPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
                             <g id="weightPointsGroup"></g>
                         </svg>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc text-light-adapt" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Weight Trend Explanation:</strong> This chart illustrates your body weight fluctuations over time. Consistent tracking helps monitor progress toward your fitness goals, accounting for natural daily variations.
+                    </p>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <div class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Every kilogram tracked brings you closer to mastering your ideal body weight!
                     </div>
                 </div>
             </div>
@@ -247,6 +265,18 @@
                         </svg>
                     </div>
                 </div>
+
+                <div class="mt-3 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc text-light-adapt" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Trunk Progression Explanation:</strong> This chart tracks circumferences around your core body areas (Abdomen, Chest, Shoulders, and Neck). It highlights changes in fat distribution and upper body muscle development.
+                    </p>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <div class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Strengthening your core builds the foundation for total body balance and power!
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -278,6 +308,18 @@
                             <polyline id="armsPolyline" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
                             <g id="armsPointsGroup"></g>
                         </svg>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc text-light-adapt" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Upper Limbs Explanation:</strong> This chart records measurements for your biceps and forearms, assisting in evaluating muscle hypertrophy and strength training effectiveness in your arms.
+                    </p>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <div class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
+                        <i class="bi bi-award-fill me-1"></i> Consistent upper body training unlocks incredible arm definition and strength!
                     </div>
                 </div>
             </div>
@@ -315,8 +357,13 @@
                     </div>
                 </div>
 
+                <div class="mt-3 pt-2 border-top border-secondary">
+                    <p class="mb-0 theme-chart-desc text-light-adapt" style="font-size: 0.75rem; line-height: 1.3;">
+                        <strong>Lower Limbs Explanation:</strong> This chart plots circumference measurements for your glutes, thighs, and calves, helping monitor lower body development and muscle tone.
+                    </p>
+                </div>
+
                 <div class="mt-3 text-center">
-                    <p class="small theme-text-sub mb-1 text-light-adapt">Total recorded entries: <strong class="theme-text-title text-light-adapt" id="totalEntriesText">0</strong> | Latest entry date: <strong class="theme-text-title text-light-adapt" id="latestEntryDateText">--</strong></p>
                     <div id="bodyMotivationMessage" class="small fw-bold px-3 py-2 rounded-3 mt-2" style="background-color: rgba(212, 175, 55, 0.12); color: var(--accent-color);">
                         <i class="bi bi-award-fill me-1"></i> Consistent tracking is key to measuring true physical transformation!
                     </div>
@@ -423,82 +470,6 @@
 
                 <p class="small theme-text-sub mb-2 text-light-adapt">Select a date below to load and edit the metrics recorded on that specific day:</p>
                 <div id="loggedDatesContainer" class="d-flex flex-column gap-2 mb-3">
-                </div>
-            </div>
-
-            <div id="dateEditFormSection" class="d-none pt-3 border-top border-secondary mt-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Log for: <span id="editingDateTitle" class="theme-text-title text-light-adapt">--</span></h6>
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteLogEntry()" style="font-size: 0.8rem;">Delete Log</button>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Weight (kg)</label>
-                        <input type="number" id="editLogWeight" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Height (m)</label>
-                        <input type="number" id="editLogHeight" class="form-control form-control-sm custom-select-dropdown" step="0.01" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Neck</label>
-                        <input type="number" id="editLogNeck" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Shoulders</label>
-                        <input type="number" id="editLogShoulders" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Chest</label>
-                        <input type="number" id="editLogChest" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Abdomen</label>
-                        <input type="number" id="editLogAbdomen" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Bicep</label>
-                        <input type="number" id="editLogRightBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Bicep</label>
-                        <input type="number" id="editLogLeftBicep" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Forearm</label>
-                        <input type="number" id="editLogRightForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Forearm</label>
-                        <input type="number" id="editLogLeftForearm" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Glutes</label>
-                        <input type="number" id="editLogGlutes" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Thigh</label>
-                        <input type="number" id="editLogRightThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Thigh</label>
-                        <input type="number" id="editLogLeftThigh" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Right Calf</label>
-                        <input type="number" id="editLogRightCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small theme-text-sub mb-1 text-light-adapt">Left Calf</label>
-                        <input type="number" id="editLogLeftCalf" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0">
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveEditedLogEntry()" style="background-color: var(--accent-color); color: #111;">
-                        Save Changes
-                    </button>
                 </div>
             </div>
         </div>

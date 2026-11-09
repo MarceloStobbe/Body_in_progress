@@ -27,8 +27,24 @@ function showBipModal(title, htmlContent, customFooter = null) {
     modalObj.show();
 }
 
+function formatHoursToDisplay(totalHours) {
+    let hoursPart = Math.floor(totalHours);
+    let minsPart = Math.round((totalHours - hoursPart) * 60);
+    if (minsPart === 60) {
+        hoursPart += 1;
+        minsPart = 0;
+    }
+    if (hoursPart === 0) {
+        return minsPart + "m";
+    } else if (minsPart === 0) {
+        return hoursPart + "h";
+    } else {
+        return hoursPart + "h " + (minsPart < 10 ? "0" : "") + minsPart + "m";
+    }
+}
+
 function populateSleepHourSelects() {
-    const selectIds = ['dailySleepTargetSelect', 'sleepLogInput', 'editSleepLogInput', 'addPastSleepHours', 'modalCheckSleepHours'];
+    const selectIds = ['dailySleepTargetSelect', 'sleepLogInput', 'editSleepInput', 'editSleepLogInput', 'addPastSleepHours', 'modalCheckSleepHours'];
     
     selectIds.forEach(id => {
         const selectEl = document.getElementById(id);
@@ -50,7 +66,7 @@ function populateSleepHourSelects() {
             }
             
             let opt = document.createElement('option');
-            opt.value = totalHours.toFixed(2) + " hrs";
+            opt.value = totalHours;
             opt.textContent = text;
             selectEl.appendChild(opt);
         }
@@ -197,7 +213,7 @@ function submitModalCheckin() {
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     localStorage.setItem('sleep_metrics_history', JSON.stringify(history));
-    localStorage.setItem('sleep_consumed_today', hoursVal.toFixed(2));
+    localStorage.setItem('sleep_consumed_today', hoursVal);
     localStorage.setItem('wake_status_today', wakeStatus);
     localStorage.setItem('wake_quality_score', qualityScore);
     localStorage.setItem('sleep_last_log_date', new Date().toDateString());
@@ -258,7 +274,7 @@ function logSleepIntake() {
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     localStorage.setItem('sleep_metrics_history', JSON.stringify(history));
-    localStorage.setItem('sleep_consumed_today', inputVal.toFixed(2));
+    localStorage.setItem('sleep_consumed_today', inputVal);
     localStorage.setItem('wake_status_today', wakeStatus);
     localStorage.setItem('wake_quality_score', qualityScore);
     localStorage.setItem('sleep_last_log_date', new Date().toDateString());
@@ -268,11 +284,11 @@ function logSleepIntake() {
 }
 
 function enableEditSleep() {
-    const currentSlept = parseFloat(localStorage.getItem('sleep_consumed_today') || '8.00');
+    const currentSlept = parseFloat(localStorage.getItem('sleep_consumed_today') || '8.0');
     const editSelect = document.getElementById('editSleepInput');
     
     for (let i = 0; i < editSelect.options.length; i++) {
-        if (parseFloat(editSelect.options[i].value) === currentSlept) {
+        if (Math.abs(parseFloat(editSelect.options[i].value) - currentSlept) < 0.01) {
             editSelect.selectedIndex = i;
             break;
         }
@@ -289,7 +305,7 @@ function saveEditedSleep() {
     }
 
     const todayDate = new Date().toISOString().split('T')[0];
-    localStorage.setItem('sleep_consumed_today', newSlept.toFixed(2));
+    localStorage.setItem('sleep_consumed_today', newSlept);
     document.getElementById('editSleepContainer').classList.add('d-none');
 
     let history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
@@ -335,7 +351,7 @@ function saveEditedStatus() {
         history[idx].quality = qualityScore;
         localStorage.setItem('sleep_metrics_history', JSON.stringify(history));
     } else {
-        const currentSlept = parseFloat(localStorage.getItem('sleep_consumed_today') || '8.00');
+        const currentSlept = parseFloat(localStorage.getItem('sleep_consumed_today') || '8.0');
         history.push({ date: todayDate, hours: currentSlept, status: newStatus, quality: qualityScore });
         history.sort((a, b) => new Date(a.date) - new Date(b.date));
         localStorage.setItem('sleep_metrics_history', JSON.stringify(history));
@@ -346,7 +362,7 @@ function saveEditedStatus() {
 }
 
 function updateSleepDashboardDisplay() {
-    const targetGoalStr = localStorage.getItem('sleep_target_goal') || '8.00 hrs';
+    const targetGoalStr = localStorage.getItem('sleep_target_goal') || '8.0';
     const consumedStr = localStorage.getItem('sleep_consumed_today');
     const wakeStatus = localStorage.getItem('wake_status_today') || 'Rested & Good';
     const qualityScore = parseInt(localStorage.getItem('wake_quality_score') || '85');
@@ -368,8 +384,8 @@ function updateSleepDashboardDisplay() {
         const consumed = consumedStr !== null && consumedStr !== '' ? parseFloat(consumedStr) : 0;
         const targetGoal = parseFloat(targetGoalStr);
 
-        document.getElementById('sleepConsumedDisplay').textContent = consumed.toFixed(2) + ' hrs';
-        document.getElementById('sleepTargetGoalDisplay').textContent = targetGoalStr;
+        document.getElementById('sleepConsumedDisplay').textContent = formatHoursToDisplay(consumed);
+        document.getElementById('sleepTargetGoalDisplay').textContent = formatHoursToDisplay(targetGoal);
         document.getElementById('wakeStatusDisplay').textContent = consumedStr !== null && consumedStr !== '' ? wakeStatus : 'Not logged';
 
         let percentage = Math.round((consumed / targetGoal) * 100);
@@ -378,56 +394,29 @@ function updateSleepDashboardDisplay() {
         document.getElementById('sleepProgressBar').style.width = percentage + '%';
         document.getElementById('sleepPercentageText').textContent = percentage + '% of target sleep reached';
 
-        let capConsumed = Math.min(consumed, 12.0);
-        let sleepTodayY = Math.round(200 - (capConsumed / 12.0) * 200);
-
-        let sleepPolyline = document.getElementById('sleepTrendPolyline');
-        let sleepCircle = document.getElementById('sleepTodayCircle');
-        let sleepText = document.getElementById('sleepTodayText');
-
-        if (sleepPolyline) {
-            sleepPolyline.setAttribute('points', `50,80 150,100 250,70 350,90 450,60 550,80 650,${sleepTodayY}`);
-        }
-        if (sleepCircle) {
-            sleepCircle.setAttribute('cy', sleepTodayY);
-        }
-        if (sleepText) {
-            sleepText.setAttribute('cy', sleepTodayY);
-            sleepText.setAttribute('y', sleepTodayY - 12);
-            sleepText.textContent = consumed.toFixed(2) + 'h';
-        }
-
-        let activeQuality = consumedStr !== null && consumedStr !== '' ? qualityScore : 0;
-        let qualityTodayY = Math.round(200 - (activeQuality / 100.0) * 200);
-
-        let qualityPolyline = document.getElementById('qualityTrendPolyline');
-        let qualityCircle = document.getElementById('qualityTodayCircle');
-        let qualityText = document.getElementById('qualityTodayText');
-
-        if (qualityPolyline) {
-            qualityPolyline.setAttribute('points', `50,60 150,80 250,50 350,70 450,40 550,60 650,${qualityTodayY}`);
-        }
-        if (qualityCircle) {
-            qualityCircle.setAttribute('cy', qualityTodayY);
-        }
-        if (qualityText) {
-            qualityText.setAttribute('cy', qualityTodayY);
-            qualityText.setAttribute('y', qualityTodayY - 12);
-            qualityText.textContent = activeQuality + '%';
-        }
+        renderSleepTrendCharts();
 
         const durationMotivation = document.getElementById('sleepDurationMotivationMessage');
         if (consumed >= targetGoal) {
-            durationMotivation.innerHTML = '<i class="bi bi-award-fill me-1"></i> You have reached your target sleep duration, congratulations!';
+            durationMotivation.innerHTML = '<i class="bi bi-award-fill me-1"></i> Outstanding! You have fully achieved or exceeded your target sleep duration.';
+        } else if (consumed >= 7.0) {
+            durationMotivation.innerHTML = '<i class="bi bi-moon-stars-fill me-1"></i> Good sleep duration! You are maintaining solid rest habits for recovery.';
+        } else if (consumed >= 5.0) {
+            durationMotivation.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Moderate sleep duration. Try to catch up on rest to avoid sleep debt accumulation.';
         } else {
-            durationMotivation.innerHTML = '<i class="bi bi-moon-stars-fill me-1"></i> Keep prioritizing your sleep schedule to hit your target hours!';
+            durationMotivation.innerHTML = '<i class="bi bi-shield-exclamation me-1"></i> Low sleep duration detected! Prioritize an early bedtime tonight for optimal recovery.';
         }
 
         const qualityMotivation = document.getElementById('sleepQualityMotivationMessage');
-        if (activeQuality >= 80) {
-            qualityMotivation.innerHTML = '<i class="bi bi-award-fill me-1"></i> Excellent sleep quality and recovery performance!';
+        let activeQuality = consumedStr !== null && consumedStr !== '' ? qualityScore : 0;
+        if (activeQuality >= 90) {
+            qualityMotivation.innerHTML = '<i class="bi bi-award-fill me-1"></i> Peak physical readiness! Excellent sleep quality and high recovery score.';
+        } else if (activeQuality >= 80) {
+            qualityMotivation.innerHTML = '<i class="bi bi-activity me-1"></i> Great recovery performance! You woke up refreshed and ready for the day.';
+        } else if (activeQuality >= 60) {
+            qualityMotivation.innerHTML = '<i class="bi bi-dash-circle-fill me-1"></i> Fair recovery level. Minor fatigue noted—focus on wind-down routines tonight.';
         } else {
-            qualityMotivation.innerHTML = '<i class="bi bi-activity me-1"></i> Focus on consistent wind-down habits to boost your recovery score!';
+            qualityMotivation.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i> Low recovery score. Consider taking it easier today to support physical replenishment.';
         }
 
     } else {
@@ -443,10 +432,103 @@ function updateSleepDashboardDisplay() {
     }
 }
 
+function renderSleepTrendCharts() {
+    const history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
+    const today = new Date();
+    
+    let sleepPoints = [];
+    let sleepGroup = document.getElementById('sleepDynamicElements');
+    if (sleepGroup) {
+        sleepGroup.innerHTML = '';
+        let totalSleep = 0, countSleep = 0;
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (6 - i));
+            const dateStr = d.toISOString().split('T')[0];
+            const dayNumber = (i === 6) ? "Today" : d.getDate();
+            const xCoord = 50 + i * 100;
+            let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
+
+            sleepGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+
+            const entry = history.find(item => item.date === dateStr);
+            if (entry && entry.hours !== undefined) {
+                const hrs = parseFloat(entry.hours);
+                totalSleep += hrs;
+                countSleep++;
+
+                let capHrs = Math.min(hrs, 12.0);
+                let yCoord = Math.round(200 - (capHrs / 12.0) * 200);
+                sleepPoints.push(`${xCoord},${yCoord}`);
+
+                let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
+                let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+                let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
+
+                let textYCoord = yCoord - 12;
+                if (yCoord < 20) {
+                    textYCoord = yCoord + 18;
+                }
+
+                sleepGroup.innerHTML += `
+                    <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
+                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${formatHoursToDisplay(hrs)}</text>
+                `;
+            }
+        }
+        document.getElementById('sleepTrendPolyline').setAttribute('points', sleepPoints.join(' '));
+        document.getElementById('avgSleepText').textContent = countSleep > 0 ? formatHoursToDisplay(totalSleep / countSleep) : '0h 00m';
+    }
+
+    let qualPoints = [];
+    let qualGroup = document.getElementById('qualityDynamicElements');
+    if (qualGroup) {
+        qualGroup.innerHTML = '';
+        let totalQual = 0, countQual = 0;
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (6 - i));
+            const dateStr = d.toISOString().split('T')[0];
+            const dayNumber = (i === 6) ? "Today" : d.getDate();
+            const xCoord = 50 + i * 100;
+            let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
+
+            qualGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+
+            const entry = history.find(item => item.date === dateStr);
+            if (entry && entry.quality !== undefined) {
+                const q = parseInt(entry.quality);
+                totalQual += q;
+                countQual++;
+
+                let yCoord = Math.round(200 - (q / 100.0) * 200);
+                qualPoints.push(`${xCoord},${yCoord}`);
+
+                let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
+                let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+                let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
+
+                let textYCoord = yCoord - 12;
+                if (yCoord < 20) {
+                    textYCoord = yCoord + 18;
+                }
+
+                qualGroup.innerHTML += `
+                    <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
+                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${q}%</text>
+                `;
+            }
+        }
+        document.getElementById('qualityTrendPolyline').setAttribute('points', qualPoints.join(' '));
+        document.getElementById('avgQualityText').textContent = countQual > 0 ? Math.round(totalQual / countQual) + '%' : '0%';
+    }
+}
+
 function toggleAddPastSleepLogForm() {
     const formSection = document.getElementById('sleepAddPastLogSection');
     formSection.classList.toggle('d-none');
-    document.getElementById('sleepDateEditFormSection').classList.add('d-none');
 
     if (!formSection.classList.contains('d-none')) {
         document.getElementById('addPastSleepDate').value = new Date().toISOString().split('T')[0];
@@ -490,7 +572,7 @@ function saveNewPastSleepLog() {
 
     const todayDate = new Date().toISOString().split('T')[0];
     if (dateStr === todayDate) {
-        localStorage.setItem('sleep_consumed_today', hoursVal.toFixed(2));
+        localStorage.setItem('sleep_consumed_today', hoursVal);
         localStorage.setItem('wake_status_today', statusVal);
         localStorage.setItem('wake_quality_score', qualityScore);
     }
@@ -504,18 +586,28 @@ function saveNewPastSleepLog() {
 function toggleSleepLogsList() {
     const listSection = document.getElementById('sleepLogsListSection');
     listSection.classList.toggle('d-none');
-    document.getElementById('sleepAddPastLogSection').classList.add('d-none');
 
     if (!listSection.classList.contains('d-none')) {
         populateSleepLoggedDatesList();
     } else {
-        document.getElementById('sleepDateEditFormSection').classList.add('d-none');
+        document.querySelectorAll('.sleep-inline-edit-form').forEach(el => el.remove());
     }
 }
 
 function populateSleepLoggedDatesList() {
     const history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
-    const container = document.getElementById('sleepLoggedDatesContainer');
+    let container = document.getElementById('sleepLoggedDatesContainer');
+    
+    if (!container) {
+        const listSection = document.getElementById('sleepLogsListSection');
+        if (!listSection) return;
+        
+        container = document.createElement('div');
+        container.id = 'sleepLoggedDatesContainer';
+        container.className = 'd-flex flex-column gap-2 mb-3';
+        listSection.appendChild(container);
+    }
+    
     container.innerHTML = '';
 
     if (history.length === 0) {
@@ -523,52 +615,129 @@ function populateSleepLoggedDatesList() {
         return;
     }
 
-    history.forEach(entry => {
+    const reversedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    reversedHistory.forEach(entry => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex flex-column gap-2';
+        wrapper.id = `sleep-log-wrapper-${entry.date}`;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3';
         btn.style.cssText = 'border-color: rgba(255,255,255,0.2); color: var(--text-color); background-color: var(--bg-input, rgba(0,0,0,0.2));';
-        btn.innerHTML = `<span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i>${entry.date}</span> <span class="small theme-text-sub">${entry.hours.toFixed(2)} hrs (${entry.status})</span>`;
-        btn.onclick = () => loadSleepLogForEditing(entry.date);
-        container.appendChild(btn);
+        btn.innerHTML = `<span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i>${entry.date}</span> <span class="small theme-text-sub">${formatHoursToDisplay(entry.hours)} (${entry.status})</span>`;
+        btn.onclick = () => toggleSleepLogInlineEdit(entry.date, wrapper);
+        
+        wrapper.appendChild(btn);
+        container.appendChild(wrapper);
     });
 }
 
-function loadSleepLogForEditing(dateStr) {
+function toggleSleepLogInlineEdit(dateStr, wrapperEl) {
+    const existingForm = wrapperEl.querySelector('.sleep-inline-edit-form');
+    if (existingForm) {
+        existingForm.remove();
+        return;
+    }
+
+    document.querySelectorAll('.sleep-inline-edit-form').forEach(el => el.remove());
+
     const history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
     const entry = history.find(item => item.date === dateStr);
     if (!entry) return;
 
-    document.getElementById('sleepEditingDateTitle').textContent = entry.date;
-    
-    const editSleepSelect = document.getElementById('editSleepLogInput');
-    for (let i = 0; i < editSleepSelect.options.length; i++) {
-        if (parseFloat(editSleepSelect.options[i].value) === (entry.hours || 0)) {
-            editSleepSelect.selectedIndex = i;
-            break;
+    const formDiv = document.createElement('div');
+    formDiv.className = 'sleep-inline-edit-form pt-3 pb-2 px-3 border border-secondary rounded-3 theme-box-toggle mt-1 mb-2';
+    formDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Sleep Log for: <span class="theme-text-title">${entry.date}</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteSleepLogEntryInline('${entry.date}')" style="font-size: 0.8rem;">Delete Log</button>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="small theme-text-sub mb-1">Hours Slept</label>
+                <select id="inlineEditSleepHours_${entry.date.replace(/-/g, '_')}" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="small theme-text-sub mb-1">Wake Status</label>
+                <select id="inlineEditSleepStatus_${entry.date.replace(/-/g, '_')}" class="form-select form-select-sm custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                    <option value="Energized & Disposed">Energized & Disposed (Excellent)</option>
+                    <option value="Rested & Good">Rested & Good (Good)</option>
+                    <option value="Slightly Fatigued">Slightly Fatigued (Fair)</option>
+                    <option value="Did Not Sleep Enough">Did Not Sleep Enough (Poor)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveInlineSleepLogEntry('${entry.date}')" style="background-color: var(--accent-color); color: #111;">
+                Save Changes
+            </button>
+        </div>
+    `;
+
+    wrapperEl.appendChild(formDiv);
+
+    const selectEl = document.getElementById(`inlineEditSleepHours_${entry.date.replace(/-/g, '_')}`);
+    if (selectEl) {
+        selectEl.innerHTML = '';
+        for (let i = 0; i <= 288; i++) {
+            let totalHours = i * (5 / 60);
+            let hoursPart = Math.floor(totalHours);
+            let minsPart = Math.round((totalHours - hoursPart) * 60);
+            
+            let text = "";
+            if (hoursPart === 0) {
+                text = minsPart + " Minutes";
+            } else if (minsPart === 0) {
+                text = hoursPart + (hoursPart === 1 ? " Hour" : " Hours");
+            } else {
+                text = hoursPart + "h " + minsPart + "m";
+            }
+            
+            let opt = document.createElement('option');
+            opt.value = totalHours;
+            opt.textContent = text;
+            selectEl.appendChild(opt);
+        }
+
+        for (let i = 0; i < selectEl.options.length; i++) {
+            if (Math.abs(parseFloat(selectEl.options[i].value) - (entry.hours || 0)) < 0.01) {
+                selectEl.selectedIndex = i;
+                break;
+            }
         }
     }
 
-    document.getElementById('editWakeStatusSelect').value = entry.status || 'Rested & Good';
-    document.getElementById('sleepDateEditFormSection').classList.remove('d-none');
+    const statusEl = document.getElementById(`inlineEditSleepStatus_${entry.date.replace(/-/g, '_')}`);
+    if (statusEl) {
+        statusEl.value = entry.status || 'Rested & Good';
+    }
 }
 
-function saveEditedSleepLogEntry() {
-    const dateStr = document.getElementById('sleepEditingDateTitle').textContent;
-    let history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
+function saveInlineSleepLogEntry(dateStr) {
+    const safeDateKey = dateStr.replace(/-/g, '_');
+    const hoursSelect = document.getElementById(`inlineEditSleepHours_${safeDateKey}`);
+    const statusSelect = document.getElementById(`inlineEditSleepStatus_${safeDateKey}`);
     
+    if (!hoursSelect || !statusSelect) return;
+
+    const newHours = parseFloat(hoursSelect.value) || 0;
+    const newStatus = statusSelect.value;
+
+    let qualityScore = 85;
+    if (newStatus === 'Energized & Disposed') qualityScore = 95;
+    else if (newStatus === 'Rested & Good') qualityScore = 85;
+    else if (newStatus === 'Slightly Fatigued') qualityScore = 65;
+    else if (newStatus === 'Did Not Sleep Enough') qualityScore = 45;
+
+    let history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
     let index = history.findIndex(item => item.date === dateStr);
+    
     if (index >= 0) {
-        const editSleepSelect = document.getElementById('editSleepLogInput');
-        const newHours = parseFloat(editSleepSelect.value) || 0;
-        const newStatus = document.getElementById('editWakeStatusSelect').value;
-
-        let qualityScore = 85;
-        if (newStatus === 'Energized & Disposed') qualityScore = 95;
-        else if (newStatus === 'Rested & Good') qualityScore = 85;
-        else if (newStatus === 'Slightly Fatigued') qualityScore = 65;
-        else if (newStatus === 'Did Not Sleep Enough') qualityScore = 45;
-
         history[index] = {
             date: dateStr,
             hours: newHours,
@@ -580,29 +749,26 @@ function saveEditedSleepLogEntry() {
 
         const todayDate = new Date().toISOString().split('T')[0];
         if (dateStr === todayDate) {
-            localStorage.setItem('sleep_consumed_today', newHours.toFixed(2));
+            localStorage.setItem('sleep_consumed_today', newHours);
             localStorage.setItem('wake_status_today', newStatus);
             localStorage.setItem('wake_quality_score', qualityScore);
         }
 
-        document.getElementById('sleepDateEditFormSection').classList.add('d-none');
         populateSleepLoggedDatesList();
         updateSleepDashboardDisplay();
     }
 }
 
-function deleteSleepLogEntry() {
-    const dateStr = document.getElementById('sleepEditingDateTitle').textContent;
-    
+function deleteSleepLogEntryInline(dateStr) {
     const html = `<p class="small theme-text-sub mb-3">Are you sure you want to delete the sleep log for <strong>${dateStr}</strong>?</p>`;
     const footer = `
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteSleepLog('${dateStr}')">Delete</button>
+        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteSleepLogInline('${dateStr}')">Delete</button>
         <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
     `;
     showBipModal("Confirm Deletion", html, footer);
 }
 
-function confirmDeleteSleepLog(dateStr) {
+function confirmDeleteSleepLogInline(dateStr) {
     let history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
     history = history.filter(item => item.date !== dateStr);
 
@@ -619,7 +785,6 @@ function confirmDeleteSleepLog(dateStr) {
     const modalInstance = bootstrap.Modal.getInstance(modalEl);
     if (modalInstance) modalInstance.hide();
 
-    document.getElementById('sleepDateEditFormSection').classList.add('d-none');
     populateSleepLoggedDatesList();
     updateSleepDashboardDisplay();
 }

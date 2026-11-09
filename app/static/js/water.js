@@ -30,7 +30,7 @@ function showBipModal(title, htmlContent, customFooter = null) {
 }
 
 function populateWaterVolumeSelects() {
-    const selectIds = ['dailyWaterTargetSelect', 'waterLogInput', 'editConsumedInput', 'addPastWaterVolume', 'editWaterLogInput', 'modalCheckWaterVolume'];
+    const selectIds = ['dailyWaterTargetSelect', 'waterLogInput', 'editConsumedInput', 'addPastWaterVolume', 'modalCheckWaterVolume'];
     
     selectIds.forEach(id => {
         const selectEl = document.getElementById(id);
@@ -368,34 +368,17 @@ function updateDashboardDisplay() {
             document.getElementById('hydrationProgressBar').style.width = percentage + '%';
             document.getElementById('hydrationPercentageText').textContent = percentage + '% of daily goal reached';
 
-            let capConsumed = Math.min(consumed, 5.0);
-            let todayY = Math.round(200 - (capConsumed / 5.0) * 200);
-
-            let polylineEl = document.getElementById('trendPolyline');
-            let todayCircle = document.getElementById('trendTodayCircle');
-            let todayText = document.getElementById('trendTodayText');
-
-            if (polylineEl) {
-                polylineEl.setAttribute('points', `50,120 150,116 250,80 350,100 450,140 550,88 650,${todayY}`);
-            }
-            if (todayCircle) {
-                todayCircle.setAttribute('cy', todayY);
-            }
-            if (todayText) {
-                todayText.setAttribute('cy', todayY);
-                todayText.setAttribute('y', todayY - 12);
-                todayText.textContent = consumed.toFixed(1) + 'L';
-            }
-
-            const pastTotal = 2.0 + 2.1 + 3.0 + 2.5 + 1.5 + 2.8;
-            const avg = ((pastTotal + consumed) / 7).toFixed(1);
-            document.getElementById('avgConsumptionText').textContent = avg + ' L';
+            renderTrendChart();
 
             const motivationBox = document.getElementById('motivationMessage');
             if (consumed >= targetGoal) {
-                motivationBox.innerHTML = '<i class="bi bi-award-fill me-1"></i> You have reached your daily hydration goal, congratulations!';
-            } else {
+                motivationBox.innerHTML = '<i class="bi bi-award-fill me-1"></i> Outstanding! You have fully achieved or exceeded your daily hydration goal.';
+            } else if (consumed >= (targetGoal * 0.75)) {
+                motivationBox.innerHTML = '<i class="bi bi-droplet-fill me-1"></i> Great progress! You are very close to completing your daily hydration target.';
+            } else if (consumed >= (targetGoal * 0.4)) {
                 motivationBox.innerHTML = '<i class="bi bi-droplet-half me-1"></i> Keep going with your hydration to reach your daily goal!';
+            } else {
+                motivationBox.innerHTML = '<i class="bi bi-shield-exclamation me-1"></i> Low water intake detected! Drink more fluids to stay properly hydrated today.';
             }
 
         } else {
@@ -415,10 +398,66 @@ function updateDashboardDisplay() {
     }
 }
 
+function renderTrendChart() {
+    const history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
+    const today = new Date();
+    
+    let polylinePoints = [];
+    let dynamicGroup = document.getElementById('trendDynamicElements');
+    if (!dynamicGroup) return;
+    dynamicGroup.innerHTML = '';
+
+    let totalSum = 0;
+    let countEntries = 0;
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - i));
+        const dateStr = d.toISOString().split('T')[0];
+        const dayNumber = (i === 6) ? "Today" : d.getDate();
+        
+        const xCoord = 50 + i * 100;
+        let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
+        dynamicGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+
+        const logEntry = history.find(item => item.date === dateStr);
+        if (logEntry && logEntry.volume !== undefined && logEntry.volume !== null) {
+            const vol = parseFloat(logEntry.volume);
+            totalSum += vol;
+            countEntries++;
+
+            let capVol = Math.min(vol, 5.0);
+            let yCoord = Math.round(200 - (capVol / 5.0) * 200);
+
+            polylinePoints.push(`${xCoord},${yCoord}`);
+
+            let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
+            let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+            let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
+
+            dynamicGroup.innerHTML += `
+                <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
+                <text x="${xCoord}" y="${yCoord - 12}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${vol.toFixed(1)}L</text>
+            `;
+        }
+    }
+
+    const polylineEl = document.getElementById('trendPolyline');
+    if (polylineEl) {
+        polylineEl.setAttribute('points', polylinePoints.join(' '));
+    }
+
+    const avg = countEntries > 0 ? (totalSum / countEntries).toFixed(1) : "0.0";
+    const avgTextEl = document.getElementById('avgConsumptionText');
+    if (avgTextEl) {
+        avgTextEl.textContent = avg + ' L';
+    }
+}
+
 function toggleAddPastWaterLogForm() {
     const formSection = document.getElementById('waterAddPastLogSection');
     formSection.classList.toggle('d-none');
-    document.getElementById('waterDateEditFormSection').classList.add('d-none');
+    document.querySelectorAll('.water-inline-edit-form').forEach(el => el.remove());
 
     if (!formSection.classList.contains('d-none')) {
         document.getElementById('addPastWaterDate').value = new Date().toISOString().split('T')[0];
@@ -472,13 +511,24 @@ function toggleWaterLogsList() {
     if (!listSection.classList.contains('d-none')) {
         populateWaterLoggedDatesList();
     } else {
-        document.getElementById('waterDateEditFormSection').classList.add('d-none');
+        document.querySelectorAll('.water-inline-edit-form').forEach(el => el.remove());
     }
 }
 
 function populateWaterLoggedDatesList() {
     const history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
-    const container = document.getElementById('waterLoggedDatesContainer');
+    let container = document.getElementById('waterLoggedDatesContainer');
+    
+    if (!container) {
+        const listSection = document.getElementById('waterLogsListSection');
+        if (!listSection) return;
+        
+        container = document.createElement('div');
+        container.id = 'waterLoggedDatesContainer';
+        container.className = 'd-flex flex-column gap-2 mb-3';
+        listSection.appendChild(container);
+    }
+    
     container.innerHTML = '';
 
     if (history.length === 0) {
@@ -486,44 +536,97 @@ function populateWaterLoggedDatesList() {
         return;
     }
 
-    history.forEach(entry => {
+    const reversedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    reversedHistory.forEach(entry => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex flex-column gap-2';
+        wrapper.id = `water-log-wrapper-${entry.date}`;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3';
         btn.style.cssText = 'border-color: rgba(255,255,255,0.2); color: var(--text-color); background-color: var(--bg-input, rgba(0,0,0,0.2));';
         btn.innerHTML = `<span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i>${entry.date}</span> <span class="small theme-text-sub">${entry.volume.toFixed(1)} L</span>`;
-        btn.onclick = () => loadWaterLogForEditing(entry.date);
-        container.appendChild(btn);
+        btn.onclick = () => toggleWaterLogInlineEdit(entry.date, wrapper);
+        
+        wrapper.appendChild(btn);
+        container.appendChild(wrapper);
     });
 }
 
-function loadWaterLogForEditing(dateStr) {
+function toggleWaterLogInlineEdit(dateStr, wrapperEl) {
+    const existingForm = wrapperEl.querySelector('.water-inline-edit-form');
+    if (existingForm) {
+        existingForm.remove();
+        return;
+    }
+
+    document.querySelectorAll('.water-inline-edit-form').forEach(el => el.remove());
+
     const history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
     const entry = history.find(item => item.date === dateStr);
     if (!entry) return;
 
-    document.getElementById('waterEditingDateTitle').textContent = entry.date;
-    
-    const editSelect = document.getElementById('editWaterLogInput');
-    for (let i = 0; i < editSelect.options.length; i++) {
-        if (parseFloat(editSelect.options[i].value) === (entry.volume || 0)) {
-            editSelect.selectedIndex = i;
-            break;
+    const formDiv = document.createElement('div');
+    formDiv.className = 'water-inline-edit-form pt-3 pb-2 px-3 border border-secondary rounded-3 theme-box-toggle mt-1 mb-2';
+    formDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Hydration Log for: <span class="theme-text-title">${entry.date}</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteWaterLogEntryInline('${entry.date}')" style="font-size: 0.8rem;">Delete Log</button>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <label class="small theme-text-sub mb-1">Water Volume</label>
+                <select id="inlineEditWaterVolume_${entry.date.replace(/-/g, '_')}" class="form-select form-select-sm border-secondary custom-select-dropdown" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();">
+                </select>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveInlineWaterLogEntry('${entry.date}')" style="background-color: var(--accent-color); color: #111;">
+                Save Changes
+            </button>
+        </div>
+    `;
+
+    wrapperEl.appendChild(formDiv);
+
+    const selectEl = document.getElementById(`inlineEditWaterVolume_${entry.date.replace(/-/g, '_')}`);
+    if (selectEl) {
+        selectEl.innerHTML = '';
+        for (let i = 1; i <= 50; i++) {
+            let val = (i / 10).toFixed(1);
+            let text = val + (val === "1.0" ? " Liter" : " Liters");
+            
+            let opt = document.createElement('option');
+            opt.value = val + " L";
+            opt.textContent = text;
+            selectEl.appendChild(opt);
+        }
+
+        for (let i = 0; i < selectEl.options.length; i++) {
+            if (parseFloat(selectEl.options[i].value) === (entry.volume || 0)) {
+                selectEl.selectedIndex = i;
+                break;
+            }
         }
     }
-
-    document.getElementById('waterDateEditFormSection').classList.remove('d-none');
 }
 
-function saveEditedWaterLogEntry() {
-    const dateStr = document.getElementById('waterEditingDateTitle').textContent;
-    let history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
+function saveInlineWaterLogEntry(dateStr) {
+    const safeDateKey = dateStr.replace(/-/g, '_');
+    const volumeSelect = document.getElementById(`inlineEditWaterVolume_${safeDateKey}`);
     
-    let index = history.findIndex(item => item.date === dateStr);
-    if (index >= 0) {
-        const editSelect = document.getElementById('editWaterLogInput');
-        const newVolume = parseFloat(editSelect.value) || 0;
+    if (!volumeSelect) return;
 
+    const newVolume = parseFloat(volumeSelect.value) || 0;
+
+    let history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
+    let index = history.findIndex(item => item.date === dateStr);
+    
+    if (index >= 0) {
         history[index] = {
             date: dateStr,
             volume: newVolume
@@ -536,24 +639,21 @@ function saveEditedWaterLogEntry() {
             localStorage.setItem('water_consumed_today', newVolume.toFixed(1));
         }
 
-        document.getElementById('waterDateEditFormSection').classList.add('d-none');
         populateWaterLoggedDatesList();
         updateDashboardDisplay();
     }
 }
 
-function deleteWaterLogEntry() {
-    const dateStr = document.getElementById('waterEditingDateTitle').textContent;
-    
+function deleteWaterLogEntryInline(dateStr) {
     const html = `<p class="small theme-text-sub mb-3">Are you sure you want to delete the hydration log for <strong>${dateStr}</strong>?</p>`;
     const footer = `
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteWaterLog('${dateStr}')">Delete</button>
+        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteWaterLogInline('${dateStr}')">Delete</button>
         <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
     `;
     showBipModal("Confirm Deletion", html, footer);
 }
 
-function confirmDeleteWaterLog(dateStr) {
+function confirmDeleteWaterLogInline(dateStr) {
     let history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
     history = history.filter(item => item.date !== dateStr);
 
@@ -568,7 +668,6 @@ function confirmDeleteWaterLog(dateStr) {
     const modalInstance = bootstrap.Modal.getInstance(modalEl);
     if (modalInstance) modalInstance.hide();
 
-    document.getElementById('waterDateEditFormSection').classList.add('d-none');
     populateWaterLoggedDatesList();
     updateDashboardDisplay();
 }

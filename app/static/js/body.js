@@ -46,16 +46,52 @@ function openBodyConfigurationHub() {
     configContainer.classList.remove('d-none');
     document.getElementById('bodyHubOptIn').checked = true;
     document.getElementById('bodyHubContent').classList.remove('d-none');
+
+    const history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
+    if (history.length > 0) {
+        const latest = history[history.length - 1];
+        if (document.getElementById('metricWeight')) document.getElementById('metricWeight').value = latest.Weight || '';
+        if (document.getElementById('metricHeight')) document.getElementById('metricHeight').value = latest.Height || '';
+        if (document.getElementById('metricNeck')) document.getElementById('metricNeck').value = latest.Neck || '';
+        if (document.getElementById('metricShoulders')) document.getElementById('metricShoulders').value = latest.Shoulders || '';
+        if (document.getElementById('metricChest')) document.getElementById('metricChest').value = latest.Chest || '';
+        if (document.getElementById('metricAbdomen')) document.getElementById('metricAbdomen').value = latest.Abdomen || '';
+        if (document.getElementById('metricRightBicep')) document.getElementById('metricRightBicep').value = latest.RightBicep || '';
+        if (document.getElementById('metricLeftBicep')) document.getElementById('metricLeftBicep').value = latest.LeftBicep || '';
+        if (document.getElementById('metricRightForearm')) document.getElementById('metricRightForearm').value = latest.RightForearm || '';
+        if (document.getElementById('metricLeftForearm')) document.getElementById('metricLeftForearm').value = latest.LeftForearm || '';
+        if (document.getElementById('metricGlutes')) document.getElementById('metricGlutes').value = latest.Glutes || '';
+        if (document.getElementById('metricRightThigh')) document.getElementById('metricRightThigh').value = latest.RightThigh || '';
+        if (document.getElementById('metricLeftThigh')) document.getElementById('metricLeftThigh').value = latest.LeftThigh || '';
+        if (document.getElementById('metricRightCalf')) document.getElementById('metricRightCalf').value = latest.RightCalf || '';
+        if (document.getElementById('metricLeftCalf')) document.getElementById('metricLeftCalf').value = latest.LeftCalf || '';
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function saveBodyMetricsRecord() {
     const todayDate = new Date().toISOString().split('T')[0];
+    let history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
+    
+    let previousWeight = 0;
+    let previousHeight = 0;
+    if (history.length > 0) {
+        const latestExisting = history[history.length - 1];
+        previousWeight = latestExisting.Weight || 0;
+        previousHeight = latestExisting.Height || 0;
+    }
+
+    const inputWeight = parseFloat(document.getElementById('metricWeight').value);
+    const inputHeight = parseFloat(document.getElementById('metricHeight').value);
+
+    const finalWeight = (!isNaN(inputWeight) && inputWeight > 0) ? inputWeight : previousWeight;
+    const finalHeight = (!isNaN(inputHeight) && inputHeight > 0) ? inputHeight : previousHeight > 0 ? previousHeight : 0;
 
     const entry = {
         date: todayDate,
-        Weight: parseFloat(document.getElementById('metricWeight').value) || 0,
-        Height: parseFloat(document.getElementById('metricHeight').value) || 0,
+        Weight: finalWeight,
+        Height: finalHeight,
         Neck: parseFloat(document.getElementById('metricNeck').value) || 0,
         Shoulders: parseFloat(document.getElementById('metricShoulders').value) || 0,
         Chest: parseFloat(document.getElementById('metricChest').value) || 0,
@@ -70,8 +106,6 @@ function saveBodyMetricsRecord() {
         RightCalf: parseFloat(document.getElementById('metricRightCalf').value) || 0,
         LeftCalf: parseFloat(document.getElementById('metricLeftCalf').value) || 0
     };
-
-    let history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
     
     let existingIndex = history.findIndex(item => item.date === todayDate);
     if (existingIndex >= 0) {
@@ -144,9 +178,6 @@ function renderAllBodyCharts() {
         document.getElementById('bmiStatusText').textContent = 'Please provide height to compute BMI & ideal weight range.';
     }
 
-    document.getElementById('totalEntriesText').textContent = history.length;
-    document.getElementById('latestEntryDateText').textContent = latest.date;
-
     renderWeightChart();
     renderTrunkChart();
     renderArmsChart();
@@ -154,21 +185,22 @@ function renderAllBodyCharts() {
 }
 
 function toggleLogsList() {
-    const listSection = document.getElementById('logsListSection');
-    listSection.classList.toggle('d-none');
+    const listSection = document.getElementById('historyManagementContainer');
+    let logsListSec = document.getElementById('logsListSection');
+    logsListSec.classList.toggle('d-none');
     document.getElementById('bodyAddPastLogSection').classList.add('d-none');
 
-    if (!listSection.classList.contains('d-none')) {
+    if (!logsListSec.classList.contains('d-none')) {
         populateLoggedDatesList();
     } else {
-        document.getElementById('dateEditFormSection').classList.add('d-none');
+        document.querySelectorAll('.body-inline-edit-form').forEach(el => el.remove());
     }
 }
 
 function toggleAddPastLogForm() {
     const formSection = document.getElementById('bodyAddPastLogSection');
     formSection.classList.toggle('d-none');
-    document.getElementById('dateEditFormSection').classList.add('d-none');
+    document.querySelectorAll('.body-inline-edit-form').forEach(el => el.remove());
 
     if (!formSection.classList.contains('d-none')) {
         document.getElementById('addPastBodyDate').value = new Date().toISOString().split('T')[0];
@@ -205,10 +237,24 @@ function saveNewPastBodyLog() {
         return;
     }
 
+    let previousWeight = 0;
+    let previousHeight = 0;
+    if (history.length > 0) {
+        const latestExisting = history[history.length - 1];
+        previousWeight = latestExisting.Weight || 0;
+        previousHeight = latestExisting.Height || 0;
+    }
+
+    const inputWeight = parseFloat(document.getElementById('addPastBodyWeight').value);
+    const inputHeight = parseFloat(document.getElementById('addPastBodyHeight').value);
+
+    const finalWeight = (!isNaN(inputWeight) && inputWeight > 0) ? inputWeight : previousWeight;
+    const finalHeight = (!isNaN(inputHeight) && inputHeight > 0) ? inputHeight : previousHeight > 0 ? previousHeight : 0;
+
     const entry = {
         date: dateStr,
-        Weight: parseFloat(document.getElementById('addPastBodyWeight').value) || 0,
-        Height: parseFloat(document.getElementById('addPastBodyHeight').value) || 0,
+        Weight: finalWeight,
+        Height: finalHeight,
         Neck: parseFloat(document.getElementById('addPastBodyNeck').value) || 0,
         Shoulders: parseFloat(document.getElementById('addPastBodyShoulders').value) || 0,
         Chest: parseFloat(document.getElementById('addPastBodyChest').value) || 0,
@@ -236,7 +282,18 @@ function saveNewPastBodyLog() {
 
 function populateLoggedDatesList() {
     const history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
-    const container = document.getElementById('loggedDatesContainer');
+    let container = document.getElementById('loggedDatesContainer');
+    
+    if (!container) {
+        const listSection = document.getElementById('logsListSection');
+        if (!listSection) return;
+        
+        container = document.createElement('div');
+        container.id = 'loggedDatesContainer';
+        container.className = 'd-flex flex-column gap-2 mb-3';
+        listSection.appendChild(container);
+    }
+    
     container.innerHTML = '';
 
     if (history.length === 0) {
@@ -244,87 +301,161 @@ function populateLoggedDatesList() {
         return;
     }
 
-    history.forEach(entry => {
+    const reversedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    reversedHistory.forEach(entry => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex flex-column gap-2';
+        wrapper.id = `body-log-wrapper-${entry.date}`;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3';
         btn.style.cssText = 'border-color: rgba(255,255,255,0.2); color: var(--text-color); background-color: var(--bg-input, rgba(0,0,0,0.2));';
         btn.innerHTML = `<span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i>${entry.date}</span> <span class="small theme-text-sub">Weight: ${entry.Weight || 0}kg</span>`;
-        btn.onclick = () => loadLogForEditing(entry.date);
-        container.appendChild(btn);
+        btn.onclick = () => toggleBodyLogInlineEdit(entry.date, wrapper);
+        
+        wrapper.appendChild(btn);
+        container.appendChild(wrapper);
     });
 }
 
-function loadLogForEditing(dateStr) {
+function toggleBodyLogInlineEdit(dateStr, wrapperEl) {
+    const existingForm = wrapperEl.querySelector('.body-inline-edit-form');
+    if (existingForm) {
+        existingForm.remove();
+        return;
+    }
+
+    document.querySelectorAll('.body-inline-edit-form').forEach(el => el.remove());
+
     const history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
     const entry = history.find(item => item.date === dateStr);
     if (!entry) return;
 
-    document.getElementById('editingDateTitle').textContent = entry.date;
-    document.getElementById('editLogWeight').value = entry.Weight || '';
-    document.getElementById('editLogHeight').value = entry.Height || '';
-    document.getElementById('editLogNeck').value = entry.Neck || '';
-    document.getElementById('editLogShoulders').value = entry.Shoulders || '';
-    document.getElementById('editLogChest').value = entry.Chest || '';
-    document.getElementById('editLogAbdomen').value = entry.Abdomen || '';
-    document.getElementById('editLogRightBicep').value = entry.RightBicep || '';
-    document.getElementById('editLogLeftBicep').value = entry.LeftBicep || '';
-    document.getElementById('editLogRightForearm').value = entry.RightForearm || '';
-    document.getElementById('editLogLeftForearm').value = entry.LeftForearm || '';
-    document.getElementById('editLogGlutes').value = entry.Glutes || '';
-    document.getElementById('editLogRightThigh').value = entry.RightThigh || '';
-    document.getElementById('editLogLeftThigh').value = entry.LeftThigh || '';
-    document.getElementById('editLogRightCalf').value = entry.RightCalf || '';
-    document.getElementById('editLogLeftCalf').value = entry.LeftCalf || '';
+    const safeKey = dateStr.replace(/-/g, '_');
+    const formDiv = document.createElement('div');
+    formDiv.className = 'body-inline-edit-form pt-3 pb-2 px-3 border border-secondary rounded-3 theme-box-toggle mt-1 mb-2';
+    formDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0" style="color: var(--accent-color);">Editing Log for: <span class="theme-text-title text-light-adapt">${entry.date}</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteLogEntryInline('${entry.date}')" style="font-size: 0.8rem;">Delete Log</button>
+        </div>
 
-    document.getElementById('dateEditFormSection').classList.remove('d-none');
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Weight (kg)</label>
+                <input type="number" id="editLogWeight_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Weight || ''}">
+            </div>
+            <div class="col-md-6">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Height (m)</label>
+                <input type="number" id="editLogHeight_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.01" min="0" value="${entry.Height || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Neck</label>
+                <input type="number" id="editLogNeck_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Neck || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Shoulders</label>
+                <input type="number" id="editLogShoulders_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Shoulders || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Chest</label>
+                <input type="number" id="editLogChest_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Chest || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Abdomen</label>
+                <input type="number" id="editLogAbdomen_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Abdomen || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Right Bicep</label>
+                <input type="number" id="editLogRightBicep_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.RightBicep || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Left Bicep</label>
+                <input type="number" id="editLogLeftBicep_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.LeftBicep || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Right Forearm</label>
+                <input type="number" id="editLogRightForearm_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.RightForearm || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Left Forearm</label>
+                <input type="number" id="editLogLeftForearm_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.LeftForearm || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Glutes</label>
+                <input type="number" id="editLogGlutes_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.Glutes || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Right Thigh</label>
+                <input type="number" id="editLogRightThigh_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.RightThigh || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Left Thigh</label>
+                <input type="number" id="editLogLeftThigh_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.LeftThigh || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Right Calf</label>
+                <input type="number" id="editLogRightCalf_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.RightCalf || ''}">
+            </div>
+            <div class="col-md-3">
+                <label class="small theme-text-sub mb-1 text-light-adapt">Left Calf</label>
+                <input type="number" id="editLogLeftCalf_${safeKey}" class="form-control form-control-sm custom-select-dropdown" step="0.1" min="0" value="${entry.LeftCalf || ''}">
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveInlineLogEntry('${entry.date}')" style="background-color: var(--accent-color); color: #111;">
+                Save Changes
+            </button>
+        </div>
+    `;
+
+    wrapperEl.appendChild(formDiv);
 }
 
-function saveEditedLogEntry() {
-    const dateStr = document.getElementById('editingDateTitle').textContent;
+function saveInlineLogEntry(dateStr) {
+    const safeKey = dateStr.replace(/-/g, '_');
     let history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
-    
     let index = history.findIndex(item => item.date === dateStr);
+    
     if (index >= 0) {
         history[index] = {
             date: dateStr,
-            Weight: parseFloat(document.getElementById('editLogWeight').value) || 0,
-            Height: parseFloat(document.getElementById('editLogHeight').value) || 0,
-            Neck: parseFloat(document.getElementById('editLogNeck').value) || 0,
-            Shoulders: parseFloat(document.getElementById('editLogShoulders').value) || 0,
-            Chest: parseFloat(document.getElementById('editLogChest').value) || 0,
-            Abdomen: parseFloat(document.getElementById('editLogAbdomen').value) || 0,
-            RightBicep: parseFloat(document.getElementById('editLogRightBicep').value) || 0,
-            LeftBicep: parseFloat(document.getElementById('editLogLeftBicep').value) || 0,
-            RightForearm: parseFloat(document.getElementById('editLogRightForearm').value) || 0,
-            LeftForearm: parseFloat(document.getElementById('editLogLeftForearm').value) || 0,
-            Glutes: parseFloat(document.getElementById('editLogGlutes').value) || 0,
-            RightThigh: parseFloat(document.getElementById('editLogRightThigh').value) || 0,
-            LeftThigh: parseFloat(document.getElementById('editLogLeftThigh').value) || 0,
-            RightCalf: parseFloat(document.getElementById('editLogRightCalf').value) || 0,
-            LeftCalf: parseFloat(document.getElementById('editLogLeftCalf').value) || 0
+            Weight: parseFloat(document.getElementById(`editLogWeight_${safeKey}`).value) || 0,
+            Height: parseFloat(document.getElementById(`editLogHeight_${safeKey}`).value) || 0,
+            Neck: parseFloat(document.getElementById(`editLogNeck_${safeKey}`).value) || 0,
+            Shoulders: parseFloat(document.getElementById(`editLogShoulders_${safeKey}`).value) || 0,
+            Chest: parseFloat(document.getElementById(`editLogChest_${safeKey}`).value) || 0,
+            Abdomen: parseFloat(document.getElementById(`editLogAbdomen_${safeKey}`).value) || 0,
+            RightBicep: parseFloat(document.getElementById(`editLogRightBicep_${safeKey}`).value) || 0,
+            LeftBicep: parseFloat(document.getElementById(`editLogLeftBicep_${safeKey}`).value) || 0,
+            RightForearm: parseFloat(document.getElementById(`editLogRightForearm_${safeKey}`).value) || 0,
+            LeftForearm: parseFloat(document.getElementById(`editLogLeftForearm_${safeKey}`).value) || 0,
+            Glutes: parseFloat(document.getElementById(`editLogGlutes_${safeKey}`).value) || 0,
+            RightThigh: parseFloat(document.getElementById(`editLogRightThigh_${safeKey}`).value) || 0,
+            LeftThigh: parseFloat(document.getElementById(`editLogLeftThigh_${safeKey}`).value) || 0,
+            RightCalf: parseFloat(document.getElementById(`editLogRightCalf_${safeKey}`).value) || 0,
+            LeftCalf: parseFloat(document.getElementById(`editLogLeftCalf_${safeKey}`).value) || 0
         };
 
         localStorage.setItem('body_metrics_history', JSON.stringify(history));
-        showBipModal("Success", "Log updated successfully!");
-        
-        document.getElementById('dateEditFormSection').classList.add('d-none');
         populateLoggedDatesList();
         renderAllBodyCharts();
     }
 }
 
-function deleteLogEntry() {
-    const dateStr = document.getElementById('editingDateTitle').textContent;
+function deleteLogEntryInline(dateStr) {
     const html = `<p class="small theme-text-sub mb-3 text-light-adapt">Are you sure you want to delete the log for <strong>${dateStr}</strong>?</p>`;
     const footer = `
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteLog('${dateStr}')">Delete</button>
+        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-danger" onclick="confirmDeleteLogInline('${dateStr}')">Delete</button>
         <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
     `;
     showBipModal("Confirm Deletion", html, footer);
 }
 
-function confirmDeleteLog(dateStr) {
+function confirmDeleteLogInline(dateStr) {
     let history = JSON.parse(localStorage.getItem('body_metrics_history') || '[]');
     history = history.filter(item => item.date !== dateStr);
 
@@ -334,7 +465,6 @@ function confirmDeleteLog(dateStr) {
     const modalInstance = bootstrap.Modal.getInstance(modalEl);
     if (modalInstance) modalInstance.hide();
 
-    document.getElementById('dateEditFormSection').classList.add('d-none');
     populateLoggedDatesList();
     renderAllBodyCharts();
 }
