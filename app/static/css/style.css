@@ -461,3 +461,13 @@ body[data-theme="light"] svg text:not([fill="var(--accent-color)"]) {
 .dropdown-menu-dark .dropdown-item:focus i {
     color: #111111 !important;
 }
+
+body[data-theme="light"] .theme-text-title,
+    body[data-theme="light"] .form-check-label,
+    body[data-theme="light"] .exercise-log-card strong,
+    body[data-theme="light"] #activeExercisesList strong,
+    body[data-theme="light"] #activeExercisesList h6 {
+        color: #111111 !important;
+    }
+
+    

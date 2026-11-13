@@ -90,21 +90,12 @@ function updateDynamicDateLabels() {
 
 function toggleHydrationContainer(checkbox) {
     const container = document.getElementById('hydrationHubContent');
-    const intakeContainer = document.getElementById('hydrationIntakeContainer');
-    const dashboardView = document.getElementById('hydrationDashboardView');
-    const historyView = document.getElementById('hydrationHistoryView');
-    const managementContainer = document.getElementById('waterHistoryManagementContainer');
-
     localStorage.setItem('water_hub_optin', checkbox.checked);
 
     if (checkbox.checked) {
         container.classList.remove('d-none');
     } else {
         container.classList.add('d-none');
-        intakeContainer.classList.add('d-none');
-        dashboardView.classList.add('d-none');
-        historyView.classList.add('d-none');
-        managementContainer.classList.add('d-none');
     }
 }
 
@@ -353,47 +344,41 @@ function updateDashboardDisplay() {
 
         if (consumedStr !== null && consumedStr !== '') {
             document.getElementById('hydrationIntakeContainer').classList.add('d-none');
-            document.getElementById('hydrationDashboardView').classList.remove('d-none');
-            document.getElementById('hydrationHistoryView').classList.remove('d-none');
-            
-            const consumed = parseFloat(consumedStr);
-            const targetGoal = parseFloat(targetGoalStr);
-
-            document.getElementById('consumedDisplay').textContent = consumed.toFixed(1) + ' L';
-            document.getElementById('targetGoalDisplay').textContent = targetGoalStr;
-
-            let percentage = Math.round((consumed / targetGoal) * 100);
-            if (percentage > 100) percentage = 100;
-
-            document.getElementById('hydrationProgressBar').style.width = percentage + '%';
-            document.getElementById('hydrationPercentageText').textContent = percentage + '% of daily goal reached';
-
-            renderTrendChart();
-
-            const motivationBox = document.getElementById('motivationMessage');
-            if (consumed >= targetGoal) {
-                motivationBox.innerHTML = '<i class="bi bi-award-fill me-1"></i> Outstanding! You have fully achieved or exceeded your daily hydration goal.';
-            } else if (consumed >= (targetGoal * 0.75)) {
-                motivationBox.innerHTML = '<i class="bi bi-droplet-fill me-1"></i> Great progress! You are very close to completing your daily hydration target.';
-            } else if (consumed >= (targetGoal * 0.4)) {
-                motivationBox.innerHTML = '<i class="bi bi-droplet-half me-1"></i> Keep going with your hydration to reach your daily goal!';
-            } else {
-                motivationBox.innerHTML = '<i class="bi bi-shield-exclamation me-1"></i> Low water intake detected! Drink more fluids to stay properly hydrated today.';
-            }
-
         } else {
             document.getElementById('hydrationIntakeContainer').classList.remove('d-none');
-            document.getElementById('hydrationDashboardView').classList.add('d-none');
-            document.getElementById('hydrationHistoryView').classList.add('d-none');
         }
+
+        const consumed = consumedStr !== null && consumedStr !== '' ? parseFloat(consumedStr) : 0;
+        const targetGoal = parseFloat(targetGoalStr);
+
+        document.getElementById('consumedDisplay').textContent = consumed.toFixed(1) + ' L';
+        document.getElementById('targetGoalDisplay').textContent = targetGoalStr;
+
+        let percentage = Math.round((consumed / targetGoal) * 100);
+        if (percentage > 100) percentage = 100;
+
+        document.getElementById('hydrationProgressBar').style.width = percentage + '%';
+        document.getElementById('hydrationPercentageText').textContent = percentage + '% of daily goal reached';
+
+        renderTrendChart();
+
+        const motivationBox = document.getElementById('motivationMessage');
+        if (consumed >= targetGoal) {
+            motivationBox.innerHTML = '<i class="bi bi-award-fill me-1"></i> Outstanding! You have fully achieved or exceeded your daily hydration goal.';
+        } else if (consumed >= (targetGoal * 0.75)) {
+            motivationBox.innerHTML = '<i class="bi bi-droplet-fill me-1"></i> Great progress! You are very close to completing your daily hydration target.';
+        } else if (consumed >= (targetGoal * 0.4)) {
+            motivationBox.innerHTML = '<i class="bi bi-droplet-half me-1"></i> Keep going with your hydration to reach your daily goal!';
+        } else {
+            motivationBox.innerHTML = '<i class="bi bi-shield-exclamation me-1"></i> Low water intake detected! Drink more fluids to stay properly hydrated today.';
+        }
+
     } else {
         document.getElementById('hydrationConfigContainer').classList.remove('d-none');
         document.getElementById('hydrationHubOptIn').checked = false;
         document.getElementById('hydrationHubContent').classList.add('d-none');
         
         document.getElementById('hydrationIntakeContainer').classList.add('d-none');
-        document.getElementById('hydrationDashboardView').classList.add('d-none');
-        document.getElementById('hydrationHistoryView').classList.add('d-none');
         document.getElementById('waterHistoryManagementContainer').classList.add('d-none');
     }
 }
@@ -435,9 +420,14 @@ function renderTrendChart() {
             let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
             let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
 
+            let textYCoord = yCoord - 12;
+            if (yCoord < 20) {
+                textYCoord = yCoord + 18;
+            }
+
             dynamicGroup.innerHTML += `
                 <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
-                <text x="${xCoord}" y="${yCoord - 12}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${vol.toFixed(1)}L</text>
+                <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${vol.toFixed(1)}L</text>
             `;
         }
     }
