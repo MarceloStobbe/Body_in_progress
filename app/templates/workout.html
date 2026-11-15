@@ -52,7 +52,7 @@
                         <label class="small fw-bold theme-text-title mb-1">Number of Routines</label>
                         <span class="small theme-text-sub d-block text-nowrap mb-1">Select how many custom workout routines to build.</span>
                         <select id="routineCountSelect" class="form-select border-secondary custom-select-dropdown" onchange="generateRoutineConfigurations(); this.size=1; this.blur();"
-                            onfocus="this.size=5;" onblur="this.size=1;">
+                            onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="1">1 Routine</option>
                             <option value="2">2 Routines</option>
                             <option value="3" selected>3 Routines</option>
@@ -67,11 +67,11 @@
                 </div>
 
                 <div id="presetConfigSection" class="d-none">
-                    <div class="mb-4" style="max-width: 320px;">
+                    <div class="mb-4" style="max-width: 390px;">
                         <label class="small fw-bold theme-text-title mb-1">Select Professional Level</label>
                         <span class="small theme-text-sub d-block text-nowrap mb-1">Choose your experience level and execution style.</span>
                         <select id="presetLevelSelect" class="form-select border-secondary custom-select-dropdown" onchange="loadPresetRoutineConfiguration(); this.size=1; this.blur();"
-                            onfocus="this.size=3;" onblur="this.size=1;">
+                            onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="beginner" selected>Beginner (Foundational Split - 3 Days)</option>
                             <option value="intermediate">Intermediate (Balanced Split - 4 Days)</option>
                             <option value="advanced">Advanced (High-Performance Split - 5 Days)</option>
@@ -99,7 +99,7 @@
                     <div class="d-flex justify-content-between align-items-center px-2 mb-1">
                         <span class="text-uppercase small theme-text-sub"><i class="bi bi-hourglass-split me-1 text-info"></i> Rest Timer</span>
                         <select id="restTargetSelect" class="form-select form-select-sm w-auto py-1 ps-2 pe-4 custom-select-dropdown" style="font-size: 0.75rem;" onchange="updateRestTargetTime(); this.size=1; this.blur();"
-                            onfocus="this.size=5;" onblur="this.size=1;">
+                            onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="30">30s</option>
                             <option value="60" selected>1m 00s</option>
                             <option value="90">1m 30s</option>
@@ -156,7 +156,7 @@
                 <div class="row g-2 justify-content-center align-items-center">
                     <div class="col-md-4">
                         <select id="liveAddMuscleSelect" class="form-select form-select-sm border-secondary custom-select-dropdown" onchange="updateLiveExerciseDropdown(); this.size=1; this.blur();"
-                            onfocus="this.size=5;" onblur="this.size=1;">
+                            onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="Chest">Chest</option>
                             <option value="Back">Back</option>
                             <option value="Quadriceps">Quadriceps</option>
@@ -173,7 +173,7 @@
                     </div>
                     <div class="col-md-5">
                         <select id="liveAddExerciseSelect" class="form-select form-select-sm border-secondary custom-select-dropdown"
-                            onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();"></select>
+                            onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;" onchange="this.size=1; this.blur();"></select>
                     </div>
                     <div class="col-md-3">
                         <button type="button" class="btn btn-sm w-100 fw-bold rounded-pill shadow" onclick="addExerciseToActiveSession()" style="background-color: var(--accent-color); color: #111;">
@@ -214,7 +214,7 @@
                     <div class="row g-2 align-items-center">
                         <div class="col-md-4">
                             <select id="editDayAddMuscle" class="form-select form-select-sm border-secondary custom-select-dropdown" onchange="updateEditDayExerciseDropdown(); this.size=1; this.blur();"
-                                onfocus="this.size=5;" onblur="this.size=1;">
+                                onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                                 <option value="Chest">Chest</option>
                                 <option value="Back">Back</option>
                                 <option value="Quadriceps">Quadriceps</option>
@@ -231,7 +231,7 @@
                         </div>
                         <div class="col-md-5">
                             <select id="editDayAddExercise" class="form-select form-select-sm border-secondary custom-select-dropdown"
-                                onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur();"></select>
+                                onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;" onchange="this.size=1; this.blur();"></select>
                         </div>
                         <div class="col-md-3">
                             <button type="button" class="btn btn-sm w-100 fw-bold rounded-pill shadow" onclick="addExerciseToEditedDay()" style="background-color: var(--accent-color); color: #111;">
@@ -289,6 +289,21 @@
             <div class="modal-footer border-top border-secondary">
                 <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
                 <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveCustomExercise()" style="background-color: var(--accent-color); color: #111;">Add Exercise</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exerciseMediaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg theme-card border border-secondary" style="background-color: var(--bg-card, #1e1e1e); color: var(--text-color, #ffffff);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold" id="exerciseMediaModalTitle" style="color: var(--accent-color);">Exercise Media</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="exerciseMediaModalBody"></div>
+            <div class="modal-footer border-top border-secondary" id="exerciseMediaModalFooter">
+                <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Close</button>
             </div>
         </div>
     </div>

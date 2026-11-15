@@ -35,13 +35,13 @@ const EXERCISE_CATALOG = {
     ],
     "Abs / Core": [
         "Plank", "Hanging Leg Raises", "Abdominal Crunches", 
-        "Russian Twists", "Cable Woodchoppers", "Decline Bench Crunches", "Cable Crunch", "Leg Raises", "Abdominal na polia", "Elevação de pernas", "Prancha abdominal"
+        "Russian Twists", "Cable Woodchoppers", "Decline Bench Crunches", "Cable Crunch", "Leg Raises"
     ],
     "Calves": [
-        "Standing Calf Raises", "Seated Calf Raises", "Panturrilha em pé", "Panturrilha sentado"
+        "Standing Calf Raises", "Seated Calf Raises"
     ],
     "Glutes": [
-        "Hip Thrusts", "Cable Glute Kickbacks", "Abductor Machine", "Cadeira abdutora", "Elevação pélvica", "Glúteo na polia"
+        "Hip Thrusts", "Cable Glute Kickbacks", "Abductor Machine"
     ],
     "Cardio": [
         "Treadmill Running", "Stationary Bike", "Elliptical Trainer", 
@@ -120,7 +120,7 @@ const PRESET_ROUTINES_DATA = {
             name: "Workout A",
             selections: [
                 { muscleGroup: "Chest", selectedExercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Decline Barbell Bench Press", "Chest Flyes / Pec Deck", "Cable Crossover"] },
-                { muscleGroup: "Abs / Core", selectedExercises: ["Abdominal na polia", "Elevação de pernas", "Prancha abdominal"] }
+                { muscleGroup: "Abs / Core", selectedExercises: ["Plank", "Hanging Leg Raises"] }
             ]
         },
         {
@@ -153,7 +153,7 @@ const PRESET_ROUTINES_DATA = {
             name: "Workout E",
             selections: [
                 { muscleGroup: "Hamstrings", selectedExercises: ["Romanian Deadlifts (Stiff)", "Lying Leg Curls", "Seated Leg Curls"] },
-                { muscleGroup: "Glutes", selectedExercises: ["Hip Thrusts", "Glúteo na polia", "Cadeira abdutora"] },
+                { muscleGroup: "Glutes", selectedExercises: ["Hip Thrusts", "Abductor Machine"] },
                 { muscleGroup: "Calves", selectedExercises: ["Seated Calf Raises"] }
             ]
         }
@@ -191,6 +191,110 @@ function showBipModal(title, htmlContent, customFooter = null) {
 
     const modalObj = new bootstrap.Modal(document.getElementById('bipCustomModal'));
     modalObj.show();
+}
+
+function openExerciseMedia(exerciseName, mediaType) {
+    const modalTitle = document.getElementById('exerciseMediaModalTitle');
+    const modalBody = document.getElementById('exerciseMediaModalBody');
+    const modalFooter = document.getElementById('exerciseMediaModalFooter');
+
+    modalTitle.textContent = `${exerciseName} - ${mediaType === 'photo' ? 'Photo / Image' : 'Video'}`;
+
+    if (mediaType === 'photo') {
+        const startImgPath = `/static/img/flat/${exerciseName} start.webp`;
+        const peakImgPath = `/static/img/flat/${exerciseName} peak.webp`;
+        const mainImgPath = `/static/img/flat/${exerciseName} main.webp`;
+
+        modalBody.innerHTML = `
+            <div class="text-center">
+                <div class="d-flex flex-column align-items-center gap-3">
+                    <img src="${mainImgPath}" alt="${exerciseName} main" class="img-fluid rounded-3 shadow d-none" style="max-height: 280px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
+                    <img src="${startImgPath}" alt="${exerciseName} start" class="img-fluid rounded-3 shadow d-none" style="max-height: 220px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
+                    <img src="${peakImgPath}" alt="${exerciseName} peak" class="img-fluid rounded-3 shadow d-none" style="max-height: 220px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
+                </div>
+            </div>
+        `;
+        modalFooter.innerHTML = `<button type="button" class="btn btn-sm px-4 fw-bold rounded-pill btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Close</button>`;
+    } else {
+        let mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
+        let exMedia = mediaData[exerciseName] || {};
+        let currentVal = exMedia[mediaType] || '';
+
+        if (currentVal) {
+            let videoHtml = '';
+            if (currentVal.includes('youtube.com') || currentVal.includes('youtu.be')) {
+                let embedUrl = currentVal;
+                if (currentVal.includes('watch?v=')) {
+                    embedUrl = currentVal.replace('watch?v=', 'embed/');
+                } else if (currentVal.includes('youtu.be/')) {
+                    embedUrl = currentVal.replace('youtu.be/', 'www.youtube.com/embed/');
+                }
+                videoHtml = `<iframe width="100%" height="250" src="${embedUrl}" frameborder="0" allowfullscreen class="rounded-3 mb-3"></iframe>`;
+            } else {
+                videoHtml = `<video src="${currentVal}" controls class="w-100 rounded-3 mb-3" style="max-height: 250px;"></video>`;
+            }
+            modalBody.innerHTML = `
+                <div class="text-center">
+                    ${videoHtml}
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="renderMediaEditForm('${exerciseName}', '${mediaType}')" style="background-color: var(--accent-color); color: #111;">Change Video</button>
+                    </div>
+                </div>
+            `;
+            modalFooter.innerHTML = `<button type="button" class="btn btn-sm px-4 fw-bold rounded-pill btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Close</button>`;
+        } else {
+            renderMediaEditForm(exerciseName, mediaType);
+        }
+    }
+
+    const modalObj = new bootstrap.Modal(document.getElementById('exerciseMediaModal'));
+    modalObj.show();
+}
+
+function renderMediaEditForm(exerciseName, mediaType) {
+    const modalBody = document.getElementById('exerciseMediaModalBody');
+    const modalFooter = document.getElementById('exerciseMediaModalFooter');
+
+    modalBody.innerHTML = `
+        <div class="mb-3">
+            <label class="small fw-bold theme-text-title mb-1">Add ${mediaType === 'photo' ? 'Photo URL or File' : 'Video URL or File'}</label>
+            <input type="text" id="mediaUrlInputField" class="form-control form-control-sm theme-card theme-text-title mb-2" placeholder="Paste image/video URL (e.g., https://...)">
+            <div class="text-center small theme-text-sub my-2">- OR upload file -</div>
+            <input type="file" id="mediaFileInputField" class="form-control form-control-sm theme-card theme-text-title" accept="${mediaType === 'photo' ? 'image/*' : 'video/*'}">
+        </div>
+    `;
+
+    modalFooter.innerHTML = `
+        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
+        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveExerciseMedia('${exerciseName}', '${mediaType}')" style="background-color: var(--accent-color); color: #111;">Save ${mediaType === 'photo' ? 'Photo' : 'Video'}</button>
+    `;
+}
+
+function saveExerciseMedia(exerciseName, mediaType) {
+    const urlInput = document.getElementById('mediaUrlInputField').value.trim();
+    const fileInput = document.getElementById('mediaFileInputField');
+
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            persistMediaData(exerciseName, mediaType, e.target.result);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    } else if (urlInput) {
+        persistMediaData(exerciseName, mediaType, urlInput);
+    } else {
+        showBipModal("Error", "Please provide a valid URL or select a file.");
+    }
+}
+
+function persistMediaData(exerciseName, mediaType, value) {
+    let mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
+    if (!mediaData[exerciseName]) mediaData[exerciseName] = {};
+    mediaData[exerciseName][mediaType] = value;
+    localStorage.setItem('bip_exercise_media', JSON.stringify(mediaData));
+
+    bootstrap.Modal.getInstance(document.getElementById('exerciseMediaModal')).hide();
+    showBipModal("Success", `${mediaType === 'photo' ? 'Photo' : 'Video'} saved successfully for ${exerciseName}!`);
 }
 
 function toggleWorkoutContainer(checkbox) {
@@ -349,7 +453,7 @@ function appendBodyAreaBlock(routineIdx, selectedMG, checkedExercises) {
 
     block.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <select class="form-select form-select-sm w-75 theme-card theme-text-title custom-select-dropdown" onchange="updateBlockExercises('${routineIdx}', '${blockId}')" id="mgSelect_${blockId}">
+            <select class="form-select form-select-sm w-75 theme-card theme-text-title custom-select-dropdown" onchange="updateBlockExercises('${routineIdx}', '${blockId}'); this.size=1; this.blur();" onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;" id="mgSelect_${blockId}">
                 ${mgOptions}
             </select>
             <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="document.getElementById('${blockId}').remove()" style="font-size: 0.75rem;">Remove</button>
@@ -382,10 +486,16 @@ function populateBlockExercises(routineIdx, blockId, muscleGroup, checkedExercis
     exercises.forEach((ex, idx) => {
         const isChecked = checkedExercises.includes(ex) ? 'checked' : '';
         const div = document.createElement('div');
-        div.className = 'form-check';
+        div.className = 'form-check d-flex justify-content-between align-items-center pe-2';
         div.innerHTML = `
-            <input class="form-check-input" type="checkbox" value="${ex}" id="chk_${blockId}_${idx}" ${isChecked}>
-            <label class="form-check-label small theme-text-title" for="chk_${blockId}_${idx}">${ex}</label>
+            <div>
+                <input class="form-check-input" type="checkbox" value="${ex}" id="chk_${blockId}_${idx}" ${isChecked}>
+                <label class="form-check-label small theme-text-title" for="chk_${blockId}_${idx}">${ex}</label>
+            </div>
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+            </div>
         `;
         checkboxContainer.appendChild(div);
     });
@@ -575,7 +685,13 @@ function performRoutine(routineName, selections) {
             exCard.setAttribute('data-exercise', ex);
             exCard.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong class="theme-text-title fs-6">${ex}</strong>
+                    <div class="d-flex align-items-center gap-2">
+                        <strong class="theme-text-title fs-6">${ex}</strong>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+                        </div>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <span id="savedBadge_${globalExIdx}" class="badge bg-secondary d-none">Saved</span>
                         <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeExerciseFromActiveSession(${sIdx}, ${eIdx})" style="font-size: 0.75rem;">Delete</button>
@@ -783,7 +899,7 @@ function renderMuscleCharts() {
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up me-2" style="color: var(--accent-color);"></i>${mg} Progression</h5>
                 <div style="max-width: 240px;">
-                    <select id="selectEx_${cardId}" class="form-select form-select-sm border-secondary theme-card theme-text-title custom-select-dropdown" onchange="updateExerciseChart('${mg}')">
+                    <select id="selectEx_${cardId}" class="form-select form-select-sm border-secondary theme-card theme-text-title custom-select-dropdown" onchange="updateExerciseChart('${mg}'); this.size=1; this.blur();" onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                         ${optionsHtml}
                     </select>
                 </div>
@@ -1151,7 +1267,13 @@ function loadWorkoutLogForEditing(dateStr, wrapperEl) {
 
                 card.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong class="theme-text-title small">${mg} — ${ex.name}</strong>
+                        <div class="d-flex align-items-center gap-2">
+                            <strong class="theme-text-title small">${mg} — ${ex.name}</strong>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex.name}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex.name}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+                            </div>
+                        </div>
                         <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('.edit-ex-card').remove()" style="font-size: 0.75rem;">Delete Exercise</button>
                     </div>
                     <div class="d-flex flex-column gap-1">${setsHtml}</div>
