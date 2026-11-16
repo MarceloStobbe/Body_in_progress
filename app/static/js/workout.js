@@ -1,7 +1,7 @@
 const EXERCISE_CATALOG = {
     "Chest": [
         "Barbell Bench Press", "Incline Barbell Bench Press", "Decline Barbell Bench Press", 
-        "Dumbbell Bench Press", "Incline Dumbbell Press", "Chest Flyes / Pec Deck", 
+        "Dumbbell Bench Press", "Incline Dumbbell Press", "Chest Flyes", "Pec Deck", 
         "Dumbbell Pullover", "Dips", "Push-ups", "Cable Crossover", "Chest Press Machine"
     ],
     "Back": [
@@ -55,7 +55,7 @@ const PRESET_ROUTINES_DATA = {
             id: 1,
             name: "Workout A",
             selections: [
-                { muscleGroup: "Chest", selectedExercises: ["Chest Press Machine", "Incline Dumbbell Press", "Chest Flyes / Pec Deck", "Cable Crossover"] },
+                { muscleGroup: "Chest", selectedExercises: ["Chest Press Machine", "Incline Dumbbell Press", "Chest Flyes", "Cable Crossover"] },
                 { muscleGroup: "Triceps", selectedExercises: ["Tricep Rope Pushdowns", "Overhead Tricep Extension"] }
             ]
         },
@@ -84,7 +84,7 @@ const PRESET_ROUTINES_DATA = {
             id: 1,
             name: "Workout A",
             selections: [
-                { muscleGroup: "Chest", selectedExercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Chest Flyes / Pec Deck", "Cable Crossover"] },
+                { muscleGroup: "Chest", selectedExercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Chest Flyes", "Cable Crossover"] },
                 { muscleGroup: "Triceps", selectedExercises: ["Skullcrushers", "Tricep Rope Pushdowns", "Overhead Tricep Extension"] }
             ]
         },
@@ -119,7 +119,7 @@ const PRESET_ROUTINES_DATA = {
             id: 1,
             name: "Workout A",
             selections: [
-                { muscleGroup: "Chest", selectedExercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Decline Barbell Bench Press", "Chest Flyes / Pec Deck", "Cable Crossover"] },
+                { muscleGroup: "Chest", selectedExercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Decline Barbell Bench Press", "Chest Flyes", "Cable Crossover"] },
                 { muscleGroup: "Abs / Core", selectedExercises: ["Plank", "Hanging Leg Raises"] }
             ]
         },
@@ -193,14 +193,25 @@ function showBipModal(title, htmlContent, customFooter = null) {
     modalObj.show();
 }
 
-function openExerciseMedia(exerciseName, mediaType) {
+function isCustomExercise(exerciseName) {
+    for (let mg in EXERCISE_CATALOG) {
+        if (EXERCISE_CATALOG[mg].includes(exerciseName)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function openExerciseMedia(exerciseName) {
     const modalTitle = document.getElementById('exerciseMediaModalTitle');
     const modalBody = document.getElementById('exerciseMediaModalBody');
     const modalFooter = document.getElementById('exerciseMediaModalFooter');
 
-    modalTitle.textContent = `${exerciseName} - ${mediaType === 'photo' ? 'Photo / Image' : 'Video'}`;
+    modalTitle.textContent = exerciseName;
 
-    if (mediaType === 'photo') {
+    const isCustom = isCustomExercise(exerciseName);
+
+    if (!isCustom) {
         const startImgPath = `/static/img/flat/${exerciseName} start.webp`;
         const peakImgPath = `/static/img/flat/${exerciseName} peak.webp`;
         const mainImgPath = `/static/img/flat/${exerciseName} main.webp`;
@@ -214,36 +225,26 @@ function openExerciseMedia(exerciseName, mediaType) {
                 </div>
             </div>
         `;
-        modalFooter.innerHTML = `<button type="button" class="btn btn-sm px-4 fw-bold rounded-pill btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Close</button>`;
+        modalFooter.innerHTML = '';
+        modalFooter.style.display = 'none';
     } else {
         let mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
         let exMedia = mediaData[exerciseName] || {};
-        let currentVal = exMedia[mediaType] || '';
+        let currentVal = exMedia['photo'] || '';
 
         if (currentVal) {
-            let videoHtml = '';
-            if (currentVal.includes('youtube.com') || currentVal.includes('youtu.be')) {
-                let embedUrl = currentVal;
-                if (currentVal.includes('watch?v=')) {
-                    embedUrl = currentVal.replace('watch?v=', 'embed/');
-                } else if (currentVal.includes('youtu.be/')) {
-                    embedUrl = currentVal.replace('youtu.be/', 'www.youtube.com/embed/');
-                }
-                videoHtml = `<iframe width="100%" height="250" src="${embedUrl}" frameborder="0" allowfullscreen class="rounded-3 mb-3"></iframe>`;
-            } else {
-                videoHtml = `<video src="${currentVal}" controls class="w-100 rounded-3 mb-3" style="max-height: 250px;"></video>`;
-            }
             modalBody.innerHTML = `
                 <div class="text-center">
-                    ${videoHtml}
+                    <img src="${currentVal}" alt="${exerciseName}" class="img-fluid rounded-3 shadow mb-3" style="max-height: 280px; object-fit: contain;">
                     <div class="d-flex justify-content-center gap-2">
-                        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="renderMediaEditForm('${exerciseName}', '${mediaType}')" style="background-color: var(--accent-color); color: #111;">Change Video</button>
+                        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="renderPhotoEditForm('${exerciseName}')" style="background-color: var(--accent-color); color: #111;">Change Photo</button>
                     </div>
                 </div>
             `;
-            modalFooter.innerHTML = `<button type="button" class="btn btn-sm px-4 fw-bold rounded-pill btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Close</button>`;
+            modalFooter.innerHTML = '';
+            modalFooter.style.display = 'none';
         } else {
-            renderMediaEditForm(exerciseName, mediaType);
+            renderPhotoEditForm(exerciseName);
         }
     }
 
@@ -251,50 +252,51 @@ function openExerciseMedia(exerciseName, mediaType) {
     modalObj.show();
 }
 
-function renderMediaEditForm(exerciseName, mediaType) {
+function renderPhotoEditForm(exerciseName) {
     const modalBody = document.getElementById('exerciseMediaModalBody');
     const modalFooter = document.getElementById('exerciseMediaModalFooter');
 
+    modalFooter.style.display = 'flex';
     modalBody.innerHTML = `
         <div class="mb-3">
-            <label class="small fw-bold theme-text-title mb-1">Add ${mediaType === 'photo' ? 'Photo URL or File' : 'Video URL or File'}</label>
-            <input type="text" id="mediaUrlInputField" class="form-control form-control-sm theme-card theme-text-title mb-2" placeholder="Paste image/video URL (e.g., https://...)">
+            <label class="small fw-bold theme-text-title mb-1">Add Photo URL or File</label>
+            <input type="text" id="mediaUrlInputField" class="form-control form-control-sm theme-card theme-text-title mb-2" placeholder="Paste image URL (e.g., https://...)">
             <div class="text-center small theme-text-sub my-2">- OR upload file -</div>
-            <input type="file" id="mediaFileInputField" class="form-control form-control-sm theme-card theme-text-title" accept="${mediaType === 'photo' ? 'image/*' : 'video/*'}">
+            <input type="file" id="mediaFileInputField" class="form-control form-control-sm theme-card theme-text-title" accept="image/*">
         </div>
     `;
 
     modalFooter.innerHTML = `
-        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel</button>
-        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveExerciseMedia('${exerciseName}', '${mediaType}')" style="background-color: var(--accent-color); color: #111;">Save ${mediaType === 'photo' ? 'Photo' : 'Video'}</button>
+        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveExercisePhoto('${exerciseName}')" style="background-color: var(--accent-color); color: #111;">Save Photo</button>
     `;
 }
 
-function saveExerciseMedia(exerciseName, mediaType) {
+function saveExercisePhoto(exerciseName) {
     const urlInput = document.getElementById('mediaUrlInputField').value.trim();
     const fileInput = document.getElementById('mediaFileInputField');
 
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            persistMediaData(exerciseName, mediaType, e.target.result);
+            persistPhotoData(exerciseName, e.target.result);
         };
         reader.readAsDataURL(fileInput.files[0]);
     } else if (urlInput) {
-        persistMediaData(exerciseName, mediaType, urlInput);
+        persistPhotoData(exerciseName, urlInput);
     } else {
-        showBipModal("Error", "Please provide a valid URL or select a file.");
+        showBipModal("Error", "Please provide a valid image URL or select a file.");
     }
 }
 
-function persistMediaData(exerciseName, mediaType, value) {
+function persistPhotoData(exerciseName, value) {
     let mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
     if (!mediaData[exerciseName]) mediaData[exerciseName] = {};
-    mediaData[exerciseName][mediaType] = value;
+    mediaData[exerciseName]['photo'] = value;
     localStorage.setItem('bip_exercise_media', JSON.stringify(mediaData));
 
     bootstrap.Modal.getInstance(document.getElementById('exerciseMediaModal')).hide();
-    showBipModal("Success", `${mediaType === 'photo' ? 'Photo' : 'Video'} saved successfully for ${exerciseName}!`);
+    showBipModal("Success", `Photo saved successfully for ${exerciseName}!`);
 }
 
 function toggleWorkoutContainer(checkbox) {
@@ -493,8 +495,7 @@ function populateBlockExercises(routineIdx, blockId, muscleGroup, checkedExercis
                 <label class="form-check-label small theme-text-title" for="chk_${blockId}_${idx}">${ex}</label>
             </div>
             <div class="d-flex gap-1">
-                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+                <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
             </div>
         `;
         checkboxContainer.appendChild(div);
@@ -688,8 +689,7 @@ function performRoutine(routineName, selections) {
                     <div class="d-flex align-items-center gap-2">
                         <strong class="theme-text-title fs-6">${ex}</strong>
                         <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+                            <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -1139,7 +1139,7 @@ function confirmFinishWorkoutModal() {
     `;
     const footer = `
         <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="finalizeWorkoutLog()" style="background-color: var(--accent-color); color: #111;">Confirm & Save</button>
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-outline-secondary" data-bs-dismiss="modal" style="border-color: rgba(255,255,255,0.2); color: var(--text-color);">Cancel (Keep Running)</button>
+        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel (Keep Running)</button>
     `;
     showBipModal("Finish Workout", html, footer);
 }
@@ -1270,8 +1270,7 @@ function loadWorkoutLogForEditing(dateStr, wrapperEl) {
                         <div class="d-flex align-items-center gap-2">
                             <strong class="theme-text-title small">${mg} — ${ex.name}</strong>
                             <div class="d-flex gap-1">
-                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex.name}', 'photo')" title="View Photo" style="font-size: 0.7rem;"><i class="bi bi-image"></i></button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openExerciseMedia('${ex.name}', 'video')" title="View/Add Video" style="font-size: 0.7rem;"><i class="bi bi-camera-video"></i></button>
+                                <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex.name}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('.edit-ex-card').remove()" style="font-size: 0.75rem;">Delete Exercise</button>

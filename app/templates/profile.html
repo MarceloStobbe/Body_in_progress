@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Body in Progress | {% if show_password_only %}Edit Password{% else %}Complete Your Profile{% endif %}{% endblock %}
 {% block content %}
-<div class="row justify-content-center align-items-center py-4">
+<div class="row justify-content-center align-items-center py-">
     <div class="col-lg-8">
         
         {% if not show_password_only %}
         <div class="p-4 p-md-5 rounded-4 shadow-lg" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color);">
             
-            <div class="text-center mb-4">
+            <div class="text-center mb-0">
                 <h2 class="fw-bold text-light">Complete Your <span style="color: var(--accent-color);">Profile</span></h2>
                 <p class="text-light small" style="opacity: 0.75;">Update your name, birth date, height, and profile photo to keep your personal profile details up to date.</p>
             </div>
