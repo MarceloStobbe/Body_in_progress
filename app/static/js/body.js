@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedBodyState();
+    window.addEventListener('resize', () => {
+        if (localStorage.getItem('body_configured') === 'true') {
+            renderWeightChart();
+            renderTrunkChart();
+            renderArmsChart();
+            renderLegsChart();
+        }
+    });
 });
 
 function showBipModal(title, htmlContent, customFooter = null) {
@@ -476,6 +484,7 @@ function renderSpecificChart(metricKey, polylineId, pointsGroupId, yAxisId, unit
     const polyline = document.getElementById(polylineId);
     const pointsGroup = document.getElementById(pointsGroupId);
     const yAxis = document.getElementById(yAxisId);
+    const svgEl = polyline ? polyline.closest('svg') : null;
 
     pointsGroup.innerHTML = '';
 
@@ -484,6 +493,11 @@ function renderSpecificChart(metricKey, polylineId, pointsGroupId, yAxisId, unit
         yAxis.innerHTML = '<span>--</span><span>--</span><span>--</span><span>--</span>';
         return;
     }
+
+    const svgWidth = 700;
+    const actualWidth = (svgEl && svgEl.clientWidth > 0) ? svgEl.clientWidth : svgWidth;
+    const xScaleFactor = svgWidth / actualWidth;
+    const isNarrow = actualWidth < 460;
 
     const values = validEntries.map(e => e[metricKey]);
     let minVal = Math.floor(Math.min(...values) * 0.9);
@@ -497,12 +511,14 @@ function renderSpecificChart(metricKey, polylineId, pointsGroupId, yAxisId, unit
         <span>${minVal.toFixed(0)}</span>
     `;
 
+    const padX = isNarrow ? 36 * xScaleFactor : 50;
+    const usableWidth = Math.max(100, svgWidth - (padX * 2));
     const totalPoints = validEntries.length;
-    const xStep = totalPoints > 1 ? 600 / (totalPoints - 1) : 0;
+    const xStep = totalPoints > 1 ? usableWidth / (totalPoints - 1) : 0;
     let pointsString = '';
 
     validEntries.forEach((entry, idx) => {
-        const x = totalPoints === 1 ? 350 : 50 + (idx * xStep);
+        const x = totalPoints === 1 ? svgWidth / 2 : padX + (idx * xStep);
         const val = entry[metricKey];
         const y = Math.round(180 - ((val - minVal) / (maxVal - minVal)) * 180);
 
@@ -511,30 +527,35 @@ function renderSpecificChart(metricKey, polylineId, pointsGroupId, yAxisId, unit
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', x);
         circle.setAttribute('cy', y);
-        circle.setAttribute('r', '5');
+        circle.setAttribute('r', isNarrow ? '4.5' : '5');
         circle.setAttribute('fill', 'var(--accent-color)');
         pointsGroup.appendChild(circle);
 
         const textVal = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textVal.setAttribute('x', x);
-        textVal.setAttribute('y', y - 10);
+        textVal.setAttribute('y', Math.max(14, y - 10));
         textVal.setAttribute('fill', 'currentColor');
-        textVal.setAttribute('font-size', '11');
+        textVal.setAttribute('font-size', isNarrow ? '10' : '11');
         textVal.setAttribute('font-weight', 'bold');
         textVal.setAttribute('text-anchor', 'middle');
+        textVal.setAttribute('transform', `translate(${x}, 0) scale(${xScaleFactor}, 1) translate(${-x}, 0)`);
         textVal.textContent = val + unit;
         pointsGroup.appendChild(textVal);
 
-        const textDate = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        textDate.setAttribute('x', x);
-        textDate.setAttribute('y', 205);
-        textDate.setAttribute('fill', idx === validEntries.length - 1 ? 'var(--accent-color)' : '#a0aec0');
-        textDate.setAttribute('font-size', '10');
-        textDate.setAttribute('font-weight', 'bold');
-        textDate.setAttribute('text-anchor', 'middle');
-        const dParts = entry.date.split('-');
-        textDate.textContent = `${dParts[1]}/${dParts[2]}`;
-        pointsGroup.appendChild(textDate);
+        const showDate = !isNarrow || totalPoints <= 4 || idx === 0 || idx === totalPoints - 1 || idx % 2 === 0;
+        if (showDate) {
+            const textDate = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textDate.setAttribute('x', x);
+            textDate.setAttribute('y', 205);
+            textDate.setAttribute('fill', idx === validEntries.length - 1 ? 'var(--accent-color)' : '#a0aec0');
+            textDate.setAttribute('font-size', isNarrow ? '9.5' : '10');
+            textDate.setAttribute('font-weight', 'bold');
+            textDate.setAttribute('text-anchor', 'middle');
+            textDate.setAttribute('transform', `translate(${x}, 0) scale(${xScaleFactor}, 1) translate(${-x}, 0)`);
+            const dParts = entry.date.split('-');
+            textDate.textContent = `${dParts[1]}/${dParts[2]}`;
+            pointsGroup.appendChild(textDate);
+        }
     });
 
     polyline.setAttribute('points', pointsString.trim());

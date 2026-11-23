@@ -8,8 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
     checkSleepMidnightReset();
     updateSleepDynamicDateLabels();
     loadSavedSleepState();
+    checkSleepReminders();
 
     setInterval(checkSleepReminders, 60000);
+
+    window.addEventListener('resize', () => {
+        if (localStorage.getItem('sleep_configured') === 'true' && localStorage.getItem('sleep_hub_optin') !== 'false') {
+            renderSleepTrendCharts();
+        }
+    });
 });
 
 function showBipModal(title, htmlContent, customFooter = null) {
@@ -108,8 +115,16 @@ function toggleSleepContainer(checkbox) {
 
     if (checkbox.checked) {
         container.classList.remove('d-none');
+        if (localStorage.getItem('sleep_configured') === 'true') {
+            updateSleepDashboardDisplay();
+        }
     } else {
         container.classList.add('d-none');
+        document.getElementById('sleepIntakeContainer').classList.add('d-none');
+        document.getElementById('sleepDashboardView').classList.add('d-none');
+        document.getElementById('sleepHistoryView').classList.add('d-none');
+        document.getElementById('sleepQualityHistoryView').classList.add('d-none');
+        document.getElementById('sleepHistoryManagementContainer').classList.add('d-none');
     }
 }
 
@@ -117,6 +132,7 @@ function openSleepConfigurationHub() {
     const configContainer = document.getElementById('sleepConfigContainer');
     configContainer.classList.remove('d-none');
     document.getElementById('sleepHubOptIn').checked = true;
+    localStorage.setItem('sleep_hub_optin', 'true');
     document.getElementById('sleepHubContent').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -142,14 +158,16 @@ function checkSleepReminders() {
 
     if (checkinTime && checkinTime !== "" && triggeredToday !== 'true') {
         const now = new Date();
-        const currentHours = String(now.getHours()).padStart(2, '0');
-        const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTimeFormatted = `${currentHours}:${currentMinutes}`;
+        const currentMinutesTotal = (now.getHours() * 60) + now.getMinutes();
 
         let checkin24 = convertTo24Hour(checkinTime);
-        if (checkin24 === currentTimeFormatted) {
-            localStorage.setItem('sleep_checkin_triggered_today', 'true');
-            triggerInteractiveCheckinModal();
+        const [targetH, targetM] = checkin24.split(':').map(Number);
+        if (!isNaN(targetH) && !isNaN(targetM)) {
+            const targetMinutesTotal = (targetH * 60) + targetM;
+            if (currentMinutesTotal >= targetMinutesTotal) {
+                localStorage.setItem('sleep_checkin_triggered_today', 'true');
+                triggerInteractiveCheckinModal();
+            }
         }
     }
 }
@@ -178,7 +196,7 @@ function triggerInteractiveCheckinModal() {
     `;
 
     showBipModal("Sleep & Recovery Check-in", html, footer);
-    setTimeout(populateSleepHourSelects, 100);
+    populateSleepHourSelects();
 }
 
 function submitModalCheckin() {
@@ -238,7 +256,7 @@ function saveSleepConfiguration() {
     localStorage.setItem('sleep_target_goal', targetSelect.value);
     localStorage.setItem('sleep_checkin_time', checkSelect.value || "");
     localStorage.setItem('sleep_configured', 'true');
-    localStorage.setItem('sleep_hub_optin', 'false');
+    localStorage.setItem('sleep_hub_optin', 'true');
 
     document.getElementById('sleepConfigContainer').classList.add('d-none');
     updateSleepDashboardDisplay();
@@ -367,8 +385,9 @@ function updateSleepDashboardDisplay() {
     const wakeStatus = localStorage.getItem('wake_status_today') || 'Rested & Good';
     const qualityScore = parseInt(localStorage.getItem('wake_quality_score') || '85');
     const isConfigured = localStorage.getItem('sleep_configured') === 'true';
+    const isHubOptIn = localStorage.getItem('sleep_hub_optin') !== 'false';
 
-    if (isConfigured) {
+    if (isConfigured && isHubOptIn) {
         document.getElementById('sleepConfigContainer').classList.add('d-none');
         document.getElementById('sleepDashboardView').classList.remove('d-none');
         document.getElementById('sleepHistoryView').classList.remove('d-none');
@@ -435,6 +454,12 @@ function updateSleepDashboardDisplay() {
 function renderSleepTrendCharts() {
     const history = JSON.parse(localStorage.getItem('sleep_metrics_history') || '[]');
     const today = new Date();
+
+    const sleepSvg = document.getElementById('sleepTrendSvgCanvas');
+    const svgWidth = 700;
+    const actualSleepWidth = (sleepSvg && sleepSvg.clientWidth > 0) ? sleepSvg.clientWidth : svgWidth;
+    const sleepScaleX = svgWidth / actualSleepWidth;
+    const isSleepNarrow = actualSleepWidth < 460;
     
     let sleepPoints = [];
     let sleepGroup = document.getElementById('sleepDynamicElements');
@@ -450,7 +475,10 @@ function renderSleepTrendCharts() {
             const xCoord = 50 + i * 100;
             let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
 
-            sleepGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+            const showLabel = !isSleepNarrow || i === 6 || i % 2 === 0;
+            if (showLabel) {
+                sleepGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="${isSleepNarrow ? '10' : '12'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${sleepScaleX}, 1) translate(${-xCoord}, 0)">${dayNumber}</text>`;
+            }
 
             const entry = history.find(item => item.date === dateStr);
             if (entry && entry.hours !== undefined) {
@@ -462,8 +490,7 @@ function renderSleepTrendCharts() {
                 let yCoord = Math.round(200 - (capHrs / 12.0) * 200);
                 sleepPoints.push(`${xCoord},${yCoord}`);
 
-                let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
-                let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+                let circleColor = "var(--accent-color)";
                 let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
 
                 let textYCoord = yCoord - 12;
@@ -472,14 +499,19 @@ function renderSleepTrendCharts() {
                 }
 
                 sleepGroup.innerHTML += `
-                    <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
-                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${formatHoursToDisplay(hrs)}</text>
+                    <circle cx="${xCoord}" cy="${yCoord}" r="${isSleepNarrow ? '4.5' : '5'}" fill="${circleColor}" />
+                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="${isSleepNarrow ? '9.5' : '11'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${sleepScaleX}, 1) translate(${-xCoord}, 0)">${formatHoursToDisplay(hrs)}</text>
                 `;
             }
         }
         document.getElementById('sleepTrendPolyline').setAttribute('points', sleepPoints.join(' '));
         document.getElementById('avgSleepText').textContent = countSleep > 0 ? formatHoursToDisplay(totalSleep / countSleep) : '0h 00m';
     }
+
+    const qualSvg = document.getElementById('qualityTrendSvgCanvas');
+    const actualQualWidth = (qualSvg && qualSvg.clientWidth > 0) ? qualSvg.clientWidth : svgWidth;
+    const qualScaleX = svgWidth / actualQualWidth;
+    const isQualNarrow = actualQualWidth < 460;
 
     let qualPoints = [];
     let qualGroup = document.getElementById('qualityDynamicElements');
@@ -495,7 +527,10 @@ function renderSleepTrendCharts() {
             const xCoord = 50 + i * 100;
             let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
 
-            qualGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+            const showLabel = !isQualNarrow || i === 6 || i % 2 === 0;
+            if (showLabel) {
+                qualGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="${isQualNarrow ? '10' : '12'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${qualScaleX}, 1) translate(${-xCoord}, 0)">${dayNumber}</text>`;
+            }
 
             const entry = history.find(item => item.date === dateStr);
             if (entry && entry.quality !== undefined) {
@@ -506,8 +541,7 @@ function renderSleepTrendCharts() {
                 let yCoord = Math.round(200 - (q / 100.0) * 200);
                 qualPoints.push(`${xCoord},${yCoord}`);
 
-                let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
-                let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+                let circleColor = "var(--accent-color)";
                 let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
 
                 let textYCoord = yCoord - 12;
@@ -516,8 +550,8 @@ function renderSleepTrendCharts() {
                 }
 
                 qualGroup.innerHTML += `
-                    <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
-                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${q}%</text>
+                    <circle cx="${xCoord}" cy="${yCoord}" r="${isQualNarrow ? '4.5' : '5'}" fill="${circleColor}" />
+                    <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="${isQualNarrow ? '9.5' : '11'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${qualScaleX}, 1) translate(${-xCoord}, 0)">${q}%</text>
                 `;
             }
         }

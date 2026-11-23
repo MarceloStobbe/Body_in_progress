@@ -176,17 +176,77 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedWorkoutState();
     updateLiveExerciseDropdown();
     updateEditDayExerciseDropdown();
+
+    window.addEventListener('resize', () => {
+        if (localStorage.getItem('workout_configured') === 'true') {
+            renderMuscleCharts();
+        }
+    });
 });
 
-function showBipModal(title, htmlContent, customFooter = null) {
+function formatWeightStep250(val) {
+    if (val === undefined || val === null || val === '') return '';
+    const num = parseFloat(val);
+    if (isNaN(num)) return '';
+    const roundedQuarter = Math.round(num * 4) / 4;
+    if (Number.isInteger(roundedQuarter)) {
+        return String(roundedQuarter);
+    }
+    return roundedQuarter.toFixed(3);
+}
+
+function attachWeightStepBehavior(inputEl) {
+    if (!inputEl) return;
+    inputEl.step = '0.25';
+    inputEl.addEventListener('blur', () => {
+        if (inputEl.value.trim() === '') {
+            inputEl.value = '';
+            return;
+        }
+        inputEl.value = formatWeightStep250(inputEl.value);
+    });
+}
+
+function cloneTemplate(templateId) {
+    const tpl = document.getElementById(templateId);
+    return tpl ? tpl.content.cloneNode(true) : document.createDocumentFragment();
+}
+
+function showBipModal(title, contentNodeOrText, customFooterNode = null) {
     document.getElementById('bipModalTitle').textContent = title;
-    document.getElementById('bipModalBody').innerHTML = htmlContent;
-    
-    const footerEl = document.getElementById('bipModalFooter');
-    if (customFooter) {
-        footerEl.innerHTML = customFooter;
+    const bodyEl = document.getElementById('bipModalBody');
+    const isNarrow = window.innerWidth < 460;
+    bodyEl.innerHTML = '';
+
+    const wrapper = document.createElement('div');
+    if (isNarrow) {
+        wrapper.style.fontSize = '0.85rem';
+        wrapper.style.lineHeight = '1.35';
+    }
+
+    if (contentNodeOrText instanceof Node) {
+        wrapper.appendChild(contentNodeOrText);
     } else {
-        footerEl.innerHTML = '<button type="button" class="btn btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal" style="background-color: var(--accent-color); color: #111;">OK</button>';
+        const p = document.createElement('p');
+        p.className = 'mb-0';
+        p.textContent = String(contentNodeOrText);
+        wrapper.appendChild(p);
+    }
+    bodyEl.appendChild(wrapper);
+
+    const footerEl = document.getElementById('bipModalFooter');
+    footerEl.innerHTML = '';
+    if (customFooterNode instanceof Node) {
+        footerEl.appendChild(customFooterNode);
+    } else {
+        const okBtn = document.createElement('button');
+        okBtn.type = 'button';
+        okBtn.className = 'btn btn-sm px-4 fw-bold rounded-pill';
+        okBtn.setAttribute('data-bs-dismiss', 'modal');
+        okBtn.style.backgroundColor = 'var(--accent-color)';
+        okBtn.style.color = '#111';
+        okBtn.textContent = 'OK';
+        footerEl.appendChild(okBtn);
     }
 
     const modalObj = new bootstrap.Modal(document.getElementById('bipCustomModal'));
@@ -208,23 +268,32 @@ function openExerciseMedia(exerciseName) {
     const modalFooter = document.getElementById('exerciseMediaModalFooter');
 
     modalTitle.textContent = exerciseName;
+    modalBody.innerHTML = '';
 
     const isCustom = isCustomExercise(exerciseName);
 
     if (!isCustom) {
-        const startImgPath = `/static/img/flat/${exerciseName} start.webp`;
-        const peakImgPath = `/static/img/flat/${exerciseName} peak.webp`;
-        const mainImgPath = `/static/img/flat/${exerciseName} main.webp`;
+        const view = cloneTemplate('tplMediaShowcase');
+        const listEl = view.querySelector('.media-images-list');
+        const variants = [
+            { suffix: 'main', maxH: '280px' },
+            { suffix: 'start', maxH: '220px' },
+            { suffix: 'peak', maxH: '220px' }
+        ];
 
-        modalBody.innerHTML = `
-            <div class="text-center">
-                <div class="d-flex flex-column align-items-center gap-3">
-                    <img src="${mainImgPath}" alt="${exerciseName} main" class="img-fluid rounded-3 shadow d-none" style="max-height: 280px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
-                    <img src="${startImgPath}" alt="${exerciseName} start" class="img-fluid rounded-3 shadow d-none" style="max-height: 220px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
-                    <img src="${peakImgPath}" alt="${exerciseName} peak" class="img-fluid rounded-3 shadow d-none" style="max-height: 220px; object-fit: contain;" onerror="this.classList.add('d-none')" onload="this.classList.remove('d-none')">
-                </div>
-            </div>
-        `;
+        variants.forEach(v => {
+            const img = document.createElement('img');
+            img.src = `/static/img/flat/${exerciseName} ${v.suffix}.webp`;
+            img.alt = `${exerciseName} ${v.suffix}`;
+            img.className = 'img-fluid rounded-3 shadow d-none';
+            img.style.maxHeight = v.maxH;
+            img.style.objectFit = 'contain';
+            img.addEventListener('error', () => img.classList.add('d-none'));
+            img.addEventListener('load', () => img.classList.remove('d-none'));
+            listEl.appendChild(img);
+        });
+
+        modalBody.appendChild(view);
         modalFooter.innerHTML = '';
         modalFooter.style.display = 'none';
     } else {
@@ -233,14 +302,13 @@ function openExerciseMedia(exerciseName) {
         let currentVal = exMedia['photo'] || '';
 
         if (currentVal) {
-            modalBody.innerHTML = `
-                <div class="text-center">
-                    <img src="${currentVal}" alt="${exerciseName}" class="img-fluid rounded-3 shadow mb-3" style="max-height: 280px; object-fit: contain;">
-                    <div class="d-flex justify-content-center gap-2">
-                        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="renderPhotoEditForm('${exerciseName}')" style="background-color: var(--accent-color); color: #111;">Change Photo</button>
-                    </div>
-                </div>
-            `;
+            const view = cloneTemplate('tplCustomMediaView');
+            const imgEl = view.querySelector('.custom-media-img');
+            imgEl.src = currentVal;
+            imgEl.alt = exerciseName;
+            view.querySelector('.change-photo-btn').addEventListener('click', () => renderPhotoEditForm(exerciseName));
+
+            modalBody.appendChild(view);
             modalFooter.innerHTML = '';
             modalFooter.style.display = 'none';
         } else {
@@ -256,20 +324,14 @@ function renderPhotoEditForm(exerciseName) {
     const modalBody = document.getElementById('exerciseMediaModalBody');
     const modalFooter = document.getElementById('exerciseMediaModalFooter');
 
-    modalFooter.style.display = 'flex';
-    modalBody.innerHTML = `
-        <div class="mb-3">
-            <label class="small fw-bold theme-text-title mb-1">Add Photo URL or File</label>
-            <input type="text" id="mediaUrlInputField" class="form-control form-control-sm theme-card theme-text-title mb-2" placeholder="Paste image URL (e.g., https://...)">
-            <div class="text-center small theme-text-sub my-2">- OR upload file -</div>
-            <input type="file" id="mediaFileInputField" class="form-control form-control-sm theme-card theme-text-title" accept="image/*">
-        </div>
-    `;
+    modalBody.innerHTML = '';
+    modalBody.appendChild(cloneTemplate('tplPhotoEditForm'));
 
-    modalFooter.innerHTML = `
-        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="saveExercisePhoto('${exerciseName}')" style="background-color: var(--accent-color); color: #111;">Save Photo</button>
-    `;
+    modalFooter.style.display = 'flex';
+    modalFooter.innerHTML = '';
+    const footerNode = cloneTemplate('tplPhotoEditFooter');
+    footerNode.querySelector('.save-photo-btn').addEventListener('click', () => saveExercisePhoto(exerciseName));
+    modalFooter.appendChild(footerNode);
 }
 
 function saveExercisePhoto(exerciseName) {
@@ -367,9 +429,20 @@ function switchConfigMode(mode) {
 
 function toggleRoutinesList() {
     const dashboardView = document.getElementById('workoutDashboardView');
+    const chartsSection = document.getElementById('workoutChartsSection');
+    const historySection = document.getElementById('workoutHistoryManagementContainer');
+    const isOpening = dashboardView.classList.contains('d-none');
+
     dashboardView.classList.toggle('d-none');
-    if (!dashboardView.classList.contains('d-none')) {
+
+    if (isOpening) {
+        if (chartsSection) chartsSection.classList.add('d-none');
+        if (historySection) historySection.classList.add('d-none');
         window.scrollTo({ top: dashboardView.offsetTop - 20, behavior: 'smooth' });
+    } else {
+        if (chartsSection) chartsSection.classList.remove('d-none');
+        if (historySection) historySection.classList.remove('d-none');
+        renderMuscleCharts();
     }
 }
 
@@ -387,21 +460,20 @@ function generateRoutineConfigurations() {
         const routineName = (foundSaved && foundSaved.name && !foundSaved.name.toLowerCase().includes('advanced')) ? foundSaved.name : defaultName;
         const existingSelections = foundSaved ? foundSaved.selections : [];
 
-        const routineCard = document.createElement('div');
-        routineCard.className = 'p-3 rounded-3 theme-box-toggle border border-secondary';
-        routineCard.innerHTML = `
-            <div class="mb-3">
-                <label class="small fw-bold theme-text-title mb-1">Routine ${i} Name</label>
-                <input type="text" id="routineName_${i}" class="form-control theme-card theme-text-title" value="${routineName}">
-            </div>
-            <div id="routineBodyAreasContainer_${i}" class="d-flex flex-column gap-3 mb-3"></div>
-            <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill fw-bold" onclick="addBodyAreaSelector(${i})" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
-                <i class="bi bi-plus-circle me-1"></i> Add Body Area / Muscle Group
-            </button>
-        `;
-        container.appendChild(routineCard);
+        const cardNode = cloneTemplate('tplRoutineConfigCard');
+        cardNode.querySelector('.routine-name-label').textContent = `Routine ${i} Name`;
 
-        const areaContainer = document.getElementById(`routineBodyAreasContainer_${i}`);
+        const nameInput = cardNode.querySelector('.routine-name-input');
+        nameInput.id = `routineName_${i}`;
+        nameInput.value = routineName;
+
+        const areasContainer = cardNode.querySelector('.routine-areas-container');
+        areasContainer.id = `routineBodyAreasContainer_${i}`;
+
+        cardNode.querySelector('.add-area-btn').addEventListener('click', () => addBodyAreaSelector(i));
+
+        container.appendChild(cardNode);
+
         if (existingSelections && existingSelections.length > 0) {
             existingSelections.forEach(sel => {
                 appendBodyAreaBlock(i, sel.muscleGroup, sel.selectedExercises);
@@ -419,23 +491,28 @@ function loadPresetRoutineConfiguration() {
 
     const routines = PRESET_ROUTINES_DATA[level] || [];
 
-    routines.forEach((r, idx) => {
-        let exercisesSummary = '';
+    routines.forEach(r => {
+        const cardNode = cloneTemplate('tplPresetRoutineCard');
+        cardNode.querySelector('.preset-routine-title').textContent = r.name;
+
+        const summaryEl = cardNode.querySelector('.preset-routine-summary');
         r.selections.forEach(sel => {
-            exercisesSummary += `<div class="small fw-bold theme-text-title mb-1">${sel.muscleGroup}:</div><ul class="small theme-text-sub ps-3 mb-2">`;
+            const mgTitle = document.createElement('div');
+            mgTitle.className = 'small fw-bold theme-text-title mb-1';
+            mgTitle.textContent = `${sel.muscleGroup}:`;
+            summaryEl.appendChild(mgTitle);
+
+            const ul = document.createElement('ul');
+            ul.className = 'small theme-text-sub ps-3 mb-2';
             sel.selectedExercises.forEach(ex => {
-                exercisesSummary += `<li>${ex}</li>`;
+                const li = document.createElement('li');
+                li.textContent = ex;
+                ul.appendChild(li);
             });
-            exercisesSummary += `</ul>`;
+            summaryEl.appendChild(ul);
         });
 
-        const card = document.createElement('div');
-        card.className = 'p-3 rounded-3 theme-box-toggle border border-secondary';
-        card.innerHTML = `
-            <h6 class="fw-bold mb-2" style="color: var(--accent-color);">${r.name}</h6>
-            <div class="mb-2">${exercisesSummary}</div>
-        `;
-        container.appendChild(card);
+        container.appendChild(cardNode);
     });
 }
 
@@ -447,27 +524,43 @@ function appendBodyAreaBlock(routineIdx, selectedMG, checkedExercises) {
     const areaContainer = document.getElementById(`routineBodyAreasContainer_${routineIdx}`);
     const blockId = 'area_block_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
-    const block = document.createElement('div');
-    block.id = blockId;
-    block.className = 'p-3 rounded-3 border border-secondary theme-card';
+    const blockNode = cloneTemplate('tplBodyAreaBlock');
+    const blockEl = blockNode.querySelector('.body-area-block');
+    blockEl.id = blockId;
 
-    let mgOptions = Object.keys(EXERCISE_CATALOG).map(mg => `<option value="${mg}" ${mg === selectedMG ? 'selected' : ''}>${mg}</option>`).join('');
+    const mgSelect = blockNode.querySelector('.mg-select');
+    mgSelect.id = `mgSelect_${blockId}`;
+    Object.keys(EXERCISE_CATALOG).forEach(mg => {
+        const opt = document.createElement('option');
+        opt.value = mg;
+        opt.textContent = mg;
+        if (mg === selectedMG) opt.selected = true;
+        mgSelect.appendChild(opt);
+    });
+    mgSelect.addEventListener('change', () => {
+        updateBlockExercises(routineIdx, blockId);
+        mgSelect.size = 1;
+        mgSelect.blur();
+    });
+    mgSelect.addEventListener('focus', () => {
+        mgSelect.size = Math.min(mgSelect.options.length, 5);
+    });
+    mgSelect.addEventListener('blur', () => {
+        mgSelect.size = 1;
+    });
 
-    block.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <select class="form-select form-select-sm w-75 theme-card theme-text-title custom-select-dropdown" onchange="updateBlockExercises('${routineIdx}', '${blockId}'); this.size=1; this.blur();" onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;" id="mgSelect_${blockId}">
-                ${mgOptions}
-            </select>
-            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="document.getElementById('${blockId}').remove()" style="font-size: 0.75rem;">Remove</button>
-        </div>
-        <div class="mb-2" id="exercisesCheckboxList_${blockId}" style="max-height: 180px; overflow-y: auto;"></div>
-        <div class="text-end">
-            <button type="button" class="btn btn-sm btn-link text-decoration-none text-warning p-0" style="font-size: 0.8rem;" onclick="openAddCustomExerciseModal('${routineIdx}', '${blockId}')">
-                <i class="bi bi-plus-circle me-1"></i> Add Custom Exercise
-            </button>
-        </div>
-    `;
-    areaContainer.appendChild(block);
+    blockNode.querySelector('.remove-area-btn').addEventListener('click', () => {
+        document.getElementById(blockId).remove();
+    });
+
+    const checkboxListEl = blockNode.querySelector('.exercises-checkbox-list');
+    checkboxListEl.id = `exercisesCheckboxList_${blockId}`;
+
+    blockNode.querySelector('.add-custom-ex-btn').addEventListener('click', () => {
+        openAddCustomExerciseModal(routineIdx, blockId);
+    });
+
+    areaContainer.appendChild(blockNode);
     populateBlockExercises(routineIdx, blockId, selectedMG, checkedExercises);
 }
 
@@ -486,19 +579,21 @@ function populateBlockExercises(routineIdx, blockId, muscleGroup, checkedExercis
     }
 
     exercises.forEach((ex, idx) => {
-        const isChecked = checkedExercises.includes(ex) ? 'checked' : '';
-        const div = document.createElement('div');
-        div.className = 'form-check d-flex justify-content-between align-items-center pe-2';
-        div.innerHTML = `
-            <div>
-                <input class="form-check-input" type="checkbox" value="${ex}" id="chk_${blockId}_${idx}" ${isChecked}>
-                <label class="form-check-label small theme-text-title" for="chk_${blockId}_${idx}">${ex}</label>
-            </div>
-            <div class="d-flex gap-1">
-                <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
-            </div>
-        `;
-        checkboxContainer.appendChild(div);
+        const rowNode = cloneTemplate('tplExerciseCheckboxRow');
+        const inputEl = rowNode.querySelector('.ex-checkbox');
+        const labelEl = rowNode.querySelector('.ex-checkbox-label');
+        const inputId = `chk_${blockId}_${idx}`;
+
+        inputEl.value = ex;
+        inputEl.id = inputId;
+        inputEl.checked = checkedExercises.includes(ex);
+
+        labelEl.htmlFor = inputId;
+        labelEl.textContent = ex;
+
+        rowNode.querySelector('.view-photo-btn').addEventListener('click', () => openExerciseMedia(ex));
+
+        checkboxContainer.appendChild(rowNode);
     });
 }
 
@@ -592,42 +687,57 @@ function renderWorkoutDashboard() {
     container.innerHTML = '';
 
     if (routines.length === 0) {
-        container.innerHTML = '<span class="small theme-text-sub">No routines configured yet.</span>';
+        const emptySpan = document.createElement('span');
+        emptySpan.className = 'small theme-text-sub';
+        emptySpan.textContent = 'No routines configured yet.';
+        container.appendChild(emptySpan);
         return;
     }
 
     routines.forEach((r, idx) => {
-        let exercisesListHtml = '';
-        if (r.selections && r.selections.length > 0) {
-            r.selections.forEach(sel => {
-                exercisesListHtml += `<div class="small fw-bold theme-text-title mb-1">${sel.muscleGroup}:</div><ul class="small theme-text-sub ps-3 mb-2">`;
-                sel.selectedExercises.forEach(ex => {
-                    exercisesListHtml += `<li>${ex}</li>`;
-                });
-                exercisesListHtml += `</ul>`;
-            });
-        } else {
-            exercisesListHtml = '<span class="small theme-text-sub">No exercises selected.</span>';
+        const colNode = cloneTemplate('tplDashboardRoutineCol');
+        const isFirst = idx === 0;
+        const cardBox = colNode.querySelector('.routine-card-box');
+        cardBox.classList.add(isFirst ? 'border-warning' : 'border-secondary');
+        if (isFirst) cardBox.classList.add('shadow-sm');
+
+        if (isFirst) {
+            colNode.querySelector('.up-next-badge').classList.remove('d-none');
+            colNode.querySelector('.up-next-br').classList.remove('d-none');
         }
 
-        const col = document.createElement('div');
-        col.className = 'col-md-6';
-        
-        const isFirst = idx === 0;
-        const cardBorderClass = isFirst ? 'border-warning shadow-sm' : 'border-secondary';
-        const badgeHtml = isFirst ? '<span class="badge bg-warning text-dark mb-2">Up Next Today</span><br>' : '';
+        colNode.querySelector('.routine-title').textContent = r.name;
 
-        col.innerHTML = `
-            <div class="card theme-card ${cardBorderClass} p-3 h-100 rounded-3">
-                ${badgeHtml}
-                <h6 class="fw-bold mb-2" style="color: var(--accent-color);">${r.name}</h6>
-                <div class="mb-3 flex-grow-1">${exercisesListHtml}</div>
-                <button type="button" class="btn btn-sm btn-outline-success fw-bold rounded-pill w-100" onclick="performRoutine('${r.name}', ${JSON.stringify(r.selections).replace(/"/g, '&quot;')})">
-                    <i class="bi bi-play-fill me-1"></i> Perform Routine
-                </button>
-            </div>
-        `;
-        container.appendChild(col);
+        const summaryEl = colNode.querySelector('.routine-exercises-summary');
+        if (r.selections && r.selections.length > 0) {
+            r.selections.forEach(sel => {
+                const mgDiv = document.createElement('div');
+                mgDiv.className = 'small fw-bold theme-text-title mb-1';
+                mgDiv.textContent = `${sel.muscleGroup}:`;
+                summaryEl.appendChild(mgDiv);
+
+                const ul = document.createElement('ul');
+                ul.className = 'small theme-text-sub ps-3 mb-2';
+                sel.selectedExercises.forEach(ex => {
+                    const li = document.createElement('li');
+                    li.textContent = ex;
+                    ul.appendChild(li);
+                });
+                summaryEl.appendChild(ul);
+            });
+        } else {
+            const noneSpan = document.createElement('span');
+            noneSpan.className = 'small theme-text-sub';
+            noneSpan.textContent = 'No exercises selected.';
+            summaryEl.appendChild(noneSpan);
+        }
+
+        const performBtn = colNode.querySelector('.perform-routine-btn');
+        performBtn.addEventListener('click', () => {
+            performRoutine(r.name, JSON.parse(JSON.stringify(r.selections || [])));
+        });
+
+        container.appendChild(colNode);
     });
 
     document.getElementById('topActionButtonsWrapper').classList.remove('d-none');
@@ -635,6 +745,20 @@ function renderWorkoutDashboard() {
     document.getElementById('workoutHistoryManagementContainer').classList.remove('d-none');
     populateWorkoutLoggedDatesList();
     renderMuscleCharts();
+}
+
+function createSetRowElement(setNumber, kgValue = '') {
+    const rowNode = cloneTemplate('tplSetRow');
+    rowNode.querySelector('.set-label').textContent = `Set ${setNumber}`;
+
+    const kgInput = rowNode.querySelector('.set-kg');
+    kgInput.value = formatWeightStep250(kgValue);
+    attachWeightStepBehavior(kgInput);
+
+    const repsInput = rowNode.querySelector('.set-reps');
+    repsInput.value = '';
+
+    return rowNode;
 }
 
 function performRoutine(routineName, selections) {
@@ -651,7 +775,10 @@ function performRoutine(routineName, selections) {
     listContainer.innerHTML = '';
 
     if (!selections || selections.length === 0) {
-        listContainer.innerHTML = '<span class="small theme-text-sub">No exercises in this routine.</span>';
+        const emptySpan = document.createElement('span');
+        emptySpan.className = 'small theme-text-sub';
+        emptySpan.textContent = 'No exercises in this routine.';
+        listContainer.appendChild(emptySpan);
         return;
     }
 
@@ -679,52 +806,36 @@ function performRoutine(routineName, selections) {
                 }
             }
 
-            const exCard = document.createElement('div');
-            exCard.id = `exerciseCard_${globalExIdx}`;
-            exCard.className = 'card theme-card border-secondary p-3 mb-3 rounded-3 exercise-log-card';
+            const cardNode = cloneTemplate('tplActiveExerciseCard');
+            const exCard = cardNode.querySelector('.exercise-log-card');
+            const exIndexCopy = globalExIdx;
+
+            exCard.id = `exerciseCard_${exIndexCopy}`;
             exCard.setAttribute('data-muscle', sel.muscleGroup);
             exCard.setAttribute('data-exercise', ex);
-            exCard.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <strong class="theme-text-title fs-6">${ex}</strong>
-                        <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span id="savedBadge_${globalExIdx}" class="badge bg-secondary d-none">Saved</span>
-                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeExerciseFromActiveSession(${sIdx}, ${eIdx})" style="font-size: 0.75rem;">Delete</button>
-                    </div>
-                </div>
-                ${lastKg !== '' ? `<div class="small theme-text-sub mb-2" style="font-size: 0.75rem;"><i class="bi bi-clock-history me-1 text-warning"></i>Last session reference: <strong>${lastKg} kg × ${lastReps} reps</strong></div>` : ''}
-                <div id="setsContainer_${globalExIdx}" class="d-flex flex-column gap-2 mb-3">
-                    <div class="row g-2 align-items-center set-row">
-                        <div class="col-3"><span class="small theme-text-sub">Set 1</span></div>
-                        <div class="col-4">
-                            <div class="input-group input-group-sm">
-                                <input type="number" class="form-control form-control-sm theme-card theme-text-title set-kg" placeholder="Kg" value="${lastKg}">
-                                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="input-group input-group-sm">
-                                <input type="number" class="form-control form-control-sm theme-card theme-text-title set-reps" placeholder="Reps" value="${lastReps}">
-                                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" class="btn btn-sm btn-link text-decoration-none text-warning p-0" style="font-size: 0.8rem;" onclick="addSetRow('${globalExIdx}')">
-                        <i class="bi bi-plus-circle me-1"></i> Add Set
-                    </button>
-                    <button id="saveBtn_${globalExIdx}" type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="saveExerciseSets('${globalExIdx}')" style="background-color: var(--accent-color); color: #111; font-size: 0.8rem;">
-                        Save Exercise
-                    </button>
-                </div>
-            `;
-            listContainer.appendChild(exCard);
+
+            cardNode.querySelector('.ex-name-label').textContent = ex;
+            cardNode.querySelector('.ex-photo-btn').addEventListener('click', () => openExerciseMedia(ex));
+            cardNode.querySelector('.saved-badge').id = `savedBadge_${exIndexCopy}`;
+            cardNode.querySelector('.delete-ex-btn').addEventListener('click', () => removeExerciseFromActiveSession(sIdx, eIdx));
+
+            if (lastKg !== '') {
+                const refBox = cardNode.querySelector('.last-ref-box');
+                refBox.classList.remove('d-none');
+                refBox.querySelector('.last-ref-text').textContent = `${formatWeightStep250(lastKg)} kg × ${lastReps} reps`;
+            }
+
+            const setsContainer = cardNode.querySelector('.sets-container');
+            setsContainer.id = `setsContainer_${exIndexCopy}`;
+            setsContainer.appendChild(createSetRowElement(1, lastKg));
+
+            cardNode.querySelector('.add-set-btn').addEventListener('click', () => addSetRow(exIndexCopy));
+
+            const saveBtn = cardNode.querySelector('.save-ex-btn');
+            saveBtn.id = `saveBtn_${exIndexCopy}`;
+            saveBtn.addEventListener('click', () => saveExerciseSets(exIndexCopy));
+
+            listContainer.appendChild(cardNode);
             globalExIdx++;
         });
     });
@@ -735,24 +846,7 @@ function performRoutine(routineName, selections) {
 function addSetRow(exIdx) {
     const container = document.getElementById(`setsContainer_${exIdx}`);
     const setCount = container.children.length + 1;
-    const row = document.createElement('div');
-    row.className = 'row g-2 align-items-center set-row';
-    row.innerHTML = `
-        <div class="col-3"><span class="small theme-text-sub">Set ${setCount}</span></div>
-        <div class="col-4">
-            <div class="input-group input-group-sm">
-                <input type="number" class="form-control form-control-sm theme-card theme-text-title set-kg" placeholder="Kg">
-                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="input-group input-group-sm">
-                <input type="number" class="form-control form-control-sm theme-card theme-text-title set-reps" placeholder="Reps">
-                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
-            </div>
-        </div>
-    `;
-    container.appendChild(row);
+    container.appendChild(createSetRowElement(setCount, ''));
 }
 
 function updateLiveExerciseDropdown() {
@@ -812,7 +906,11 @@ function saveExerciseSets(exIdx) {
     card.style.borderColor = 'var(--accent-color)';
     const saveBtn = document.getElementById(`saveBtn_${exIdx}`);
     saveBtn.className = 'btn btn-sm px-4 fw-bold rounded-pill shadow btn-success';
-    saveBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Saved ✓';
+    saveBtn.innerHTML = '';
+    const checkIcon = document.createElement('i');
+    checkIcon.className = 'bi bi-check-circle-fill me-1';
+    saveBtn.appendChild(checkIcon);
+    saveBtn.appendChild(document.createTextNode('Saved ✓'));
     saveBtn.setAttribute('disabled', 'true');
 
     const muscleGroup = card.getAttribute('data-muscle');
@@ -821,9 +919,12 @@ function saveExerciseSets(exIdx) {
     let setsData = [];
 
     setRows.forEach((row, rIdx) => {
-        const kg = parseFloat(row.querySelector('.set-kg').value) || 0;
+        const kgInput = row.querySelector('.set-kg');
+        const rawKg = parseFloat(kgInput.value) || 0;
+        const kg = Math.round(rawKg * 4) / 4;
+        kgInput.value = formatWeightStep250(kg);
         const reps = parseInt(row.querySelector('.set-reps').value) || 0;
-        const estimated1RM = reps > 0 ? Math.round(kg * (1 + reps / 30)) : kg;
+        const estimated1RM = reps > 0 ? Math.round((kg * (1 + reps / 30)) * 4) / 4 : kg;
         setsData.push({ set: rIdx + 1, kg: kg, reps: reps, rm1: estimated1RM });
     });
 
@@ -869,7 +970,6 @@ function checkAndUpdatePersonalRecords(exercise, sets) {
 
 function renderMuscleCharts() {
     const muscleHistory = JSON.parse(localStorage.getItem('bip_muscle_logs') || '{}');
-    const prs = JSON.parse(localStorage.getItem('bip_workout_prs') || '{}');
     const container = document.getElementById('dynamicExerciseChartsContainer');
     container.innerHTML = '';
 
@@ -890,60 +990,73 @@ function renderMuscleCharts() {
         const exercisesList = Array.from(availableExercises);
         const cardId = mg.replace(/[^a-zA-Z0-9]/g, '_');
 
-        const card = document.createElement('div');
-        card.className = 'card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3';
-        
-        let optionsHtml = exercisesList.map((ex, idx) => `<option value="${ex}" ${idx === 0 ? 'selected' : ''}>${ex}</option>`).join('');
+        const cardNode = cloneTemplate('tplMuscleChartCard');
+        cardNode.querySelector('.chart-mg-title').textContent = `${mg} Progression`;
 
-        card.innerHTML = `
-            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-                <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up me-2" style="color: var(--accent-color);"></i>${mg} Progression</h5>
-                <div style="max-width: 240px;">
-                    <select id="selectEx_${cardId}" class="form-select form-select-sm border-secondary theme-card theme-text-title custom-select-dropdown" onchange="updateExerciseChart('${mg}'); this.size=1; this.blur();" onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
-                        ${optionsHtml}
-                    </select>
-                </div>
-            </div>
-            <div id="prBadgeContainer_${cardId}" class="mb-3 p-2 rounded-3 theme-box-toggle border border-secondary text-center small fw-bold" style="color: var(--accent-color);">
-                <i class="bi bi-trophy-fill me-1"></i> Personal Record (PR): --
-            </div>
-            <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
-                <div class="d-flex" style="height: 220px;">
-                    <div id="yAxis_${cardId}" class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold" style="width: 50px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
-                    <div class="position-relative flex-grow-1" style="height: 220px;">
-                        <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
-                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
-                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
-                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
-                            <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
-                            <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
-                        </div>
-                        <svg id="svgCanvas_${cardId}" class="position-absolute w-100 h-100 top-0 start-0" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
-                            <polyline id="poly_${cardId}" fill="none" stroke="var(--accent-color)" stroke-width="3" points="" />
-                            <g id="points_${cardId}"></g>
-                        </svg>
-                    </div>
-                </div>
-                <div class="text-center mt-3"><span class="small theme-text-sub" id="desc_${cardId}">Displaying average weight reference per repetition volume.</span></div>
-            </div>
-            <div class="p-3 rounded-3 theme-box-toggle border border-secondary">
-                <h6 class="fw-bold small theme-text-title mb-1"><i class="bi bi-info-circle-fill me-1" style="color: var(--accent-color);"></i>Progression Tracking & Analytics</h6>
-                <p class="small theme-text-sub mb-0">This chart evaluates your progressive overload for ${mg} exercises by calculating the weighted average load across recent training sessions. Consistently increasing your working weight or repetition volume directly drives muscle growth and strength adaptations.</p>
-            </div>
-        `;
-        container.appendChild(card);
+        const selectEl = cardNode.querySelector('.chart-ex-select');
+        selectEl.id = `selectEx_${cardId}`;
+        exercisesList.forEach((ex, idx) => {
+            const opt = document.createElement('option');
+            opt.value = ex;
+            opt.textContent = ex;
+            if (idx === 0) opt.selected = true;
+            selectEl.appendChild(opt);
+        });
+        selectEl.addEventListener('change', () => {
+            updateExerciseChart(mg);
+            selectEl.size = 1;
+            selectEl.blur();
+        });
+        selectEl.addEventListener('focus', () => {
+            selectEl.size = Math.min(selectEl.options.length, 5);
+        });
+        selectEl.addEventListener('blur', () => {
+            selectEl.size = 1;
+        });
+
+        cardNode.querySelector('.pr-badge-box').id = `prBadgeContainer_${cardId}`;
+        cardNode.querySelector('.pr-badge-text').id = `prBadgeText_${cardId}`;
+
+        const yAxisEl = cardNode.querySelector('.chart-y-axis');
+        yAxisEl.id = `yAxis_${cardId}`;
+
+        const svgEl = cardNode.querySelector('.chart-svg');
+        svgEl.id = `svgCanvas_${cardId}`;
+
+        const polyEl = cardNode.querySelector('.chart-polyline');
+        polyEl.id = `poly_${cardId}`;
+
+        const pointsGroupEl = cardNode.querySelector('.chart-points-group');
+        pointsGroupEl.id = `points_${cardId}`;
+
+        const descEl = cardNode.querySelector('.chart-desc');
+        descEl.id = `desc_${cardId}`;
+
+        cardNode.querySelector('.chart-info-text').textContent =
+            `This chart evaluates your progressive overload for ${mg} exercises by calculating the weighted average load across recent training sessions. Consistently increasing your working weight or repetition volume directly drives muscle growth and strength adaptations.`;
+
+        container.appendChild(cardNode);
         drawExerciseChart(mg);
     });
 
     if (!hasAnyLogs) {
         document.getElementById('workoutChartsSection').classList.add('d-none');
-    } else {
+    } else if (document.getElementById('workoutDashboardView').classList.contains('d-none')) {
         document.getElementById('workoutChartsSection').classList.remove('d-none');
     }
 }
 
 function updateExerciseChart(mg) {
     drawExerciseChart(mg);
+}
+
+function setYAxisLabels(yAxisEl, labels) {
+    yAxisEl.innerHTML = '';
+    labels.forEach(txt => {
+        const span = document.createElement('span');
+        span.textContent = txt;
+        yAxisEl.appendChild(span);
+    });
 }
 
 function drawExerciseChart(mg) {
@@ -954,12 +1067,12 @@ function drawExerciseChart(mg) {
 
     const muscleHistory = JSON.parse(localStorage.getItem('bip_muscle_logs') || '{}');
     const prs = JSON.parse(localStorage.getItem('bip_workout_prs') || '{}');
-    const prContainer = document.getElementById(`prBadgeContainer_${cardId}`);
+    const prTextEl = document.getElementById(`prBadgeText_${cardId}`);
 
     if (prs[selectedEx]) {
-        prContainer.innerHTML = `<i class="bi bi-trophy-fill me-1 text-warning"></i> Personal Record (PR): <strong>${prs[selectedEx].maxKg} kg</strong> max load | Est. 1RM: <strong>${prs[selectedEx].max1RM} kg</strong> (${prs[selectedEx].date})`;
+        prTextEl.textContent = `Personal Record (PR): ${prs[selectedEx].maxKg} kg max load | Est. 1RM: ${prs[selectedEx].max1RM} kg (${prs[selectedEx].date})`;
     } else {
-        prContainer.innerHTML = `<i class="bi bi-trophy-fill me-1"></i> Personal Record (PR): No record yet.`;
+        prTextEl.textContent = `Personal Record (PR): No record yet.`;
     }
 
     const logs = muscleHistory[mg] || [];
@@ -975,7 +1088,7 @@ function drawExerciseChart(mg) {
                 totalKg += (s.kg * s.reps);
                 totalReps += s.reps;
             });
-            let avgWeight = totalReps > 0 ? Math.round(totalKg / totalReps) : 0;
+            let avgWeight = totalReps > 0 ? Math.round((totalKg / totalReps) * 4) / 4 : 0;
             exerciseData.push({ date: log.date, value: avgWeight });
         }
     });
@@ -985,27 +1098,33 @@ function drawExerciseChart(mg) {
     const pointsGroup = document.getElementById(`points_${cardId}`);
     const yAxis = document.getElementById(`yAxis_${cardId}`);
     const desc = document.getElementById(`desc_${cardId}`);
+    const svgEl = document.getElementById(`svgCanvas_${cardId}`);
 
     pointsGroup.innerHTML = '';
 
     if (recentEntries.length === 0) {
         polyline.setAttribute('points', '');
-        yAxis.innerHTML = '<span>--</span><span>--</span><span>--</span><span>--</span>';
+        setYAxisLabels(yAxis, ['--', '--', '--', '--']);
         desc.textContent = `No performance data logged yet for ${selectedEx}.`;
         return;
     }
+
+    const svgWidth = 700;
+    const actualWidth = (svgEl && svgEl.clientWidth > 0) ? svgEl.clientWidth : svgWidth;
+    const scaleX = svgWidth / actualWidth;
+    const isNarrow = actualWidth < 460;
 
     const values = recentEntries.map(e => e.value);
     let minVal = Math.floor(Math.min(...values) * 0.9);
     let maxVal = Math.ceil(Math.max(...values) * 1.1);
     if (minVal === maxVal) { minVal = 0; maxVal = maxVal * 1.2 || 100; }
 
-    yAxis.innerHTML = `
-        <span>${maxVal.toFixed(0)} kg</span>
-        <span>${(maxVal - (maxVal - minVal) * 0.33).toFixed(0)} kg</span>
-        <span>${(maxVal - (maxVal - minVal) * 0.66).toFixed(0)} kg</span>
-        <span>${minVal.toFixed(0)} kg</span>
-    `;
+    setYAxisLabels(yAxis, [
+        `${maxVal.toFixed(0)} kg`,
+        `${(maxVal - (maxVal - minVal) * 0.33).toFixed(0)} kg`,
+        `${(maxVal - (maxVal - minVal) * 0.66).toFixed(0)} kg`,
+        `${minVal.toFixed(0)} kg`
+    ]);
 
     const totalPoints = recentEntries.length;
     const xStep = totalPoints > 1 ? 600 / (totalPoints - 1) : 0;
@@ -1021,30 +1140,35 @@ function drawExerciseChart(mg) {
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', x);
         circle.setAttribute('cy', y);
-        circle.setAttribute('r', '5');
+        circle.setAttribute('r', isNarrow ? '4.5' : '5');
         circle.setAttribute('fill', 'var(--accent-color)');
         pointsGroup.appendChild(circle);
 
         const textVal = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textVal.setAttribute('x', x);
-        textVal.setAttribute('y', y - 10);
+        textVal.setAttribute('y', y < 20 ? y + 16 : y - 10);
         textVal.setAttribute('fill', 'currentColor');
-        textVal.setAttribute('font-size', '11');
+        textVal.setAttribute('font-size', isNarrow ? '9.5' : '11');
         textVal.setAttribute('font-weight', 'bold');
         textVal.setAttribute('text-anchor', 'middle');
+        textVal.setAttribute('transform', `translate(${x}, 0) scale(${scaleX}, 1) translate(${-x}, 0)`);
         textVal.textContent = val + ' kg';
         pointsGroup.appendChild(textVal);
 
-        const textDate = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        textDate.setAttribute('x', x);
-        textDate.setAttribute('y', 205);
-        textDate.setAttribute('fill', idx === recentEntries.length - 1 ? 'var(--accent-color)' : '#a0aec0');
-        textDate.setAttribute('font-size', '10');
-        textDate.setAttribute('font-weight', 'bold');
-        textDate.setAttribute('text-anchor', 'middle');
-        const dParts = entry.date.split('-');
-        textDate.textContent = `${dParts[1]}/${dParts[2]}`;
-        pointsGroup.appendChild(textDate);
+        const showDate = !isNarrow || idx === recentEntries.length - 1 || idx % 2 === 0;
+        if (showDate) {
+            const textDate = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textDate.setAttribute('x', x);
+            textDate.setAttribute('y', 205);
+            textDate.setAttribute('fill', idx === recentEntries.length - 1 ? 'var(--accent-color)' : '#a0aec0');
+            textDate.setAttribute('font-size', isNarrow ? '9.5' : '10');
+            textDate.setAttribute('font-weight', 'bold');
+            textDate.setAttribute('text-anchor', 'middle');
+            textDate.setAttribute('transform', `translate(${x}, 0) scale(${scaleX}, 1) translate(${-x}, 0)`);
+            const dParts = entry.date.split('-');
+            textDate.textContent = `${dParts[1]}/${dParts[2]}`;
+            pointsGroup.appendChild(textDate);
+        }
     });
 
     polyline.setAttribute('points', pointsString.trim());
@@ -1133,15 +1257,13 @@ function triggerRestAlarm() {
 
 function confirmFinishWorkoutModal() {
     const timeStr = document.getElementById('workoutSessionTimerDisplay').textContent;
-    const html = `
-        <p class="small theme-text-sub mb-3">🏆 Great Job! Total workout time: <strong class="text-warning">${timeStr}</strong>.</p>
-        <p class="small theme-text-sub mb-0">Would you like to finish and save this workout session?</p>
-    `;
-    const footer = `
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow" onclick="finalizeWorkoutLog()" style="background-color: var(--accent-color); color: #111;">Confirm & Save</button>
-        <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel (Keep Running)</button>
-    `;
-    showBipModal("Finish Workout", html, footer);
+    const bodyNode = cloneTemplate('tplFinishWorkoutBody');
+    bodyNode.querySelector('.finish-time-val').textContent = timeStr;
+
+    const footerNode = cloneTemplate('tplFinishWorkoutFooter');
+    footerNode.querySelector('.confirm-finish-btn').addEventListener('click', finalizeWorkoutLog);
+
+    showBipModal("Finish Workout", bodyNode, footerNode);
 }
 
 function cancelWorkoutSession() {
@@ -1182,10 +1304,51 @@ function toggleWorkoutLogsList() {
     const listSection = document.getElementById('workoutLogsListSection');
     listSection.classList.toggle('d-none');
     document.getElementById('workoutDateEditFormSection').classList.add('d-none');
+    document.getElementById('addPastWorkoutLogFormSection').classList.add('d-none');
 
     if (!listSection.classList.contains('d-none')) {
         populateWorkoutLoggedDatesList();
     }
+}
+
+function toggleAddPastWorkoutLogForm() {
+    const formSec = document.getElementById('addPastWorkoutLogFormSection');
+    formSec.classList.toggle('d-none');
+    const dateInput = document.getElementById('newWorkoutLogDateInput');
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+function createDateLogWrapper(dateStr) {
+    const node = cloneTemplate('tplLoggedDateWrapper');
+    const wrapper = node.firstElementChild;
+    wrapper.id = `workout-log-wrapper-${dateStr}`;
+    node.querySelector('.date-log-label').textContent = dateStr;
+    node.querySelector('.date-log-btn').addEventListener('click', () => loadWorkoutLogForEditing(dateStr, wrapper));
+    return wrapper;
+}
+
+function openWorkoutLogForNewDate() {
+    const dateStr = document.getElementById('newWorkoutLogDateInput').value;
+    if (!dateStr) {
+        showBipModal("Notice", "Please select a valid date.");
+        return;
+    }
+
+    document.getElementById('addPastWorkoutLogFormSection').classList.add('d-none');
+
+    let wrapper = document.getElementById(`workout-log-wrapper-${dateStr}`);
+    if (!wrapper) {
+        const container = document.getElementById('workoutLoggedDatesContainer');
+        if (container.textContent.includes('No history logs found')) {
+            container.innerHTML = '';
+        }
+        wrapper = createDateLogWrapper(dateStr);
+        container.prepend(wrapper);
+    }
+
+    loadWorkoutLogForEditing(dateStr, wrapper);
 }
 
 function populateWorkoutLoggedDatesList() {
@@ -1200,25 +1363,62 @@ function populateWorkoutLoggedDatesList() {
     container.innerHTML = '';
 
     if (datesList.length === 0) {
-        container.innerHTML = '<span class="small theme-text-sub">No history logs found.</span>';
+        const emptySpan = document.createElement('span');
+        emptySpan.className = 'small theme-text-sub';
+        emptySpan.textContent = 'No history logs found.';
+        container.appendChild(emptySpan);
         return;
     }
 
     datesList.forEach(dateStr => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'd-flex flex-column gap-2';
-        wrapper.id = `workout-log-wrapper-${dateStr}`;
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3';
-        btn.style.cssText = 'border-color: rgba(255,255,255,0.2); color: var(--text-color); background-color: var(--bg-input, rgba(0,0,0,0.2));';
-        btn.innerHTML = `<span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i>${dateStr}</span> <span class="small theme-text-sub">View & Edit</span>`;
-        btn.onclick = () => loadWorkoutLogForEditing(dateStr, wrapper);
-        
-        wrapper.appendChild(btn);
-        container.appendChild(wrapper);
+        container.appendChild(createDateLogWrapper(dateStr));
     });
+}
+
+function createEditSetRowElement(setNumber, kgVal = '', repsVal = '') {
+    const rowNode = cloneTemplate('tplEditSetRow');
+    rowNode.querySelector('.edit-set-label').textContent = `Set ${setNumber}`;
+    const kgInput = rowNode.querySelector('.edit-set-kg');
+    kgInput.value = formatWeightStep250(kgVal);
+    attachWeightStepBehavior(kgInput);
+    rowNode.querySelector('.edit-set-reps').value = (repsVal !== undefined && repsVal !== null && repsVal !== '') ? repsVal : '';
+    return rowNode;
+}
+
+function addEditSetRow(btnEl) {
+    const card = btnEl.closest('.edit-ex-card');
+    const setsContainer = card.querySelector('.edit-sets-container');
+    const nextSetNum = setsContainer.querySelectorAll('.edit-set-row').length + 1;
+    setsContainer.appendChild(createEditSetRowElement(nextSetNum, '', ''));
+}
+
+function createEditExerciseCardElement(mg, exName, setsArray, showPhotoButton = true) {
+    const cardNode = cloneTemplate('tplEditExerciseCard');
+    const cardEl = cardNode.querySelector('.edit-ex-card');
+    cardEl.setAttribute('data-muscle', mg);
+    cardEl.setAttribute('data-exname', exName);
+
+    cardNode.querySelector('.edit-ex-title').textContent = `${mg} — ${exName}`;
+
+    if (showPhotoButton) {
+        cardNode.querySelector('.edit-photo-btn').addEventListener('click', () => openExerciseMedia(exName));
+    } else {
+        cardNode.querySelector('.edit-photo-wrapper').remove();
+    }
+
+    cardNode.querySelector('.delete-edit-ex-btn').addEventListener('click', () => cardEl.remove());
+
+    const setsContainer = cardNode.querySelector('.edit-sets-container');
+    setsArray.forEach((s, sIdx) => {
+        const kgVal = (s.kg !== undefined && s.kg !== null && s.kg !== '') ? s.kg : '';
+        const repsVal = (s.reps !== undefined && s.reps !== null && s.reps !== '') ? s.reps : '';
+        setsContainer.appendChild(createEditSetRowElement(s.set || (sIdx + 1), kgVal, repsVal));
+    });
+
+    const addSetBtn = cardNode.querySelector('.add-edit-set-btn');
+    addSetBtn.addEventListener('click', () => addEditSetRow(addSetBtn));
+
+    return cardEl;
 }
 
 function loadWorkoutLogForEditing(dateStr, wrapperEl) {
@@ -1237,53 +1437,18 @@ function loadWorkoutLogForEditing(dateStr, wrapperEl) {
     Object.keys(muscleHistory).forEach(mg => {
         let dayLog = muscleHistory[mg].find(l => l.date === dateStr);
         if (dayLog) {
-            dayLog.exercises.forEach((ex, eIdx) => {
+            dayLog.exercises.forEach(ex => {
                 hasExercises = true;
-                const card = document.createElement('div');
-                card.className = 'p-3 rounded-3 border border-secondary theme-card edit-ex-card';
-                card.setAttribute('data-muscle', mg);
-                card.setAttribute('data-exname', ex.name);
-
-                let setsHtml = '';
-                ex.sets.forEach((s, sIdx) => {
-                    setsHtml += `
-                        <div class="row g-2 align-items-center mb-1 edit-set-row">
-                            <div class="col-3"><span class="small theme-text-sub">Set ${s.set}</span></div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control form-control-sm theme-card theme-text-title edit-set-kg" value="${s.kg}">
-                                    <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control form-control-sm theme-card theme-text-title edit-set-reps" value="${s.reps}">
-                                    <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                card.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <strong class="theme-text-title small">${mg} — ${ex.name}</strong>
-                            <div class="d-flex gap-1">
-                                <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm" onclick="openExerciseMedia('${ex.name}')" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('.edit-ex-card').remove()" style="font-size: 0.75rem;">Delete Exercise</button>
-                    </div>
-                    <div class="d-flex flex-column gap-1">${setsHtml}</div>
-                `;
-                container.appendChild(card);
+                container.appendChild(createEditExerciseCardElement(mg, ex.name, ex.sets || [], true));
             });
         }
     });
 
     if (!hasExercises) {
-        container.innerHTML = '<span class="small theme-text-sub">No exercises recorded for this date.</span>';
+        const emptySpan = document.createElement('span');
+        emptySpan.className = 'small theme-text-sub';
+        emptySpan.textContent = 'No exercises recorded for this date.';
+        container.appendChild(emptySpan);
     }
 
     editFormSection.classList.remove('d-none');
@@ -1309,38 +1474,11 @@ function addExerciseToEditedDay() {
     if (!ex) return;
 
     const container = document.getElementById('editDayExercisesContainer');
-    if (container.innerHTML.includes('No exercises recorded')) {
+    if (container.textContent.includes('No exercises recorded')) {
         container.innerHTML = '';
     }
 
-    const card = document.createElement('div');
-    card.className = 'p-3 rounded-3 border border-secondary theme-card edit-ex-card';
-    card.setAttribute('data-muscle', mg);
-    card.setAttribute('data-exname', ex);
-    card.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong class="theme-text-title small">${mg} — ${ex}</strong>
-            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('.edit-ex-card').remove()" style="font-size: 0.75rem;">Delete Exercise</button>
-        </div>
-        <div class="d-flex flex-column gap-1">
-            <div class="row g-2 align-items-center mb-1 edit-set-row">
-                <div class="col-3"><span class="small theme-text-sub">Set 1</span></div>
-                <div class="col-4">
-                    <div class="input-group input-group-sm">
-                        <input type="number" class="form-control form-control-sm theme-card theme-text-title edit-set-kg" value="0">
-                        <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="input-group input-group-sm">
-                        <input type="number" class="form-control form-control-sm theme-card theme-text-title edit-set-reps" value="10">
-                        <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    container.appendChild(card);
+    container.appendChild(createEditExerciseCardElement(mg, ex, [{ set: 1, kg: '', reps: '' }], false));
 }
 
 function saveEditedWorkoutLogDay() {
@@ -1359,9 +1497,12 @@ function saveEditedWorkoutLogDay() {
         let sets = [];
 
         setRows.forEach((row, rIdx) => {
-            const kg = parseFloat(row.querySelector('.edit-set-kg').value) || 0;
+            const kgInput = row.querySelector('.edit-set-kg');
+            const rawKg = parseFloat(kgInput.value) || 0;
+            const kg = Math.round(rawKg * 4) / 4;
+            kgInput.value = formatWeightStep250(kg);
             const reps = parseInt(row.querySelector('.edit-set-reps').value) || 0;
-            const estimated1RM = reps > 0 ? Math.round(kg * (1 + reps / 30)) : kg;
+            const estimated1RM = reps > 0 ? Math.round((kg * (1 + reps / 30)) * 4) / 4 : kg;
             sets.push({ set: rIdx + 1, kg: kg, reps: reps, rm1: estimated1RM });
         });
 

@@ -10,8 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
     checkMidnightReset();
     updateDynamicDateLabels();
     loadSavedWaterState();
+    checkHydrationReminders();
 
     setInterval(checkHydrationReminders, 60000);
+
+    window.addEventListener('resize', () => {
+        if (localStorage.getItem('water_configured') === 'true' && localStorage.getItem('water_hub_optin') !== 'false') {
+            renderTrendChart();
+        }
+    });
 });
 
 function showBipModal(title, htmlContent, customFooter = null) {
@@ -61,6 +68,11 @@ function checkMidnightReset() {
     if (lastLogDate && lastLogDate !== todayStr) {
         localStorage.removeItem('water_consumed_today');
         localStorage.removeItem('water_checkin_triggered_today');
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('water_reminder_triggered_')) {
+                localStorage.removeItem(key);
+            }
+        });
     }
     localStorage.setItem('water_last_log_date', todayStr);
 }
@@ -94,8 +106,15 @@ function toggleHydrationContainer(checkbox) {
 
     if (checkbox.checked) {
         container.classList.remove('d-none');
+        if (localStorage.getItem('water_configured') === 'true') {
+            updateDashboardDisplay();
+        }
     } else {
         container.classList.add('d-none');
+        document.getElementById('hydrationIntakeContainer').classList.add('d-none');
+        document.getElementById('hydrationDashboardView').classList.add('d-none');
+        document.getElementById('hydrationHistoryView').classList.add('d-none');
+        document.getElementById('waterHistoryManagementContainer').classList.add('d-none');
     }
 }
 
@@ -104,6 +123,7 @@ function openConfigurationHub() {
     
     configContainer.classList.remove('d-none');
     document.getElementById('hydrationHubOptIn').checked = true;
+    localStorage.setItem('water_hub_optin', 'true');
     document.getElementById('hydrationHubContent').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -158,12 +178,15 @@ function checkHydrationReminders() {
     const currentHours = String(now.getHours()).padStart(2, '0');
     const currentMinutes = String(now.getMinutes()).padStart(2, '0');
     const currentTimeFormatted = `${currentHours}:${currentMinutes}`;
+    const currentMinutesTotal = (now.getHours() * 60) + now.getMinutes();
 
     const savedTimes = JSON.parse(localStorage.getItem('water_scheduled_times') || '[]');
     if (savedTimes.length > 0) {
         savedTimes.forEach((tStr, index) => {
             let t24 = convertTo24Hour(tStr);
-            if (t24 === currentTimeFormatted) {
+            const triggerKey = `water_reminder_triggered_${t24}`;
+            if (t24 === currentTimeFormatted && localStorage.getItem(triggerKey) !== 'true') {
+                localStorage.setItem(triggerKey, 'true');
                 const targetGoalStr = localStorage.getItem('water_target_goal') || '2.5 L';
                 const totalTarget = parseFloat(targetGoalStr);
                 const intervalCount = savedTimes.length;
@@ -173,9 +196,8 @@ function checkHydrationReminders() {
 
                 if (window.Notification && Notification.permission === "granted") {
                     new Notification("Body in Progress | Water & Hydration Tracker", { body: message, icon: "/static/favicon.ico" });
-                } else {
-                    showBipModal("Hydration Reminder", `<p class="small theme-text-sub mb-0">${message}</p>`);
                 }
+                showBipModal("Hydration Reminder", `<p class="small theme-text-sub mb-0">${message}</p>`);
             }
         });
     }
@@ -185,9 +207,13 @@ function checkHydrationReminders() {
 
     if (checkinTime && checkinTime !== "" && triggeredToday !== 'true') {
         let checkin24 = convertTo24Hour(checkinTime);
-        if (checkin24 === currentTimeFormatted) {
-            localStorage.setItem('water_checkin_triggered_today', 'true');
-            triggerInteractiveCheckinModal();
+        const [targetH, targetM] = checkin24.split(':').map(Number);
+        if (!isNaN(targetH) && !isNaN(targetM)) {
+            const targetMinutesTotal = (targetH * 60) + targetM;
+            if (currentMinutesTotal >= targetMinutesTotal) {
+                localStorage.setItem('water_checkin_triggered_today', 'true');
+                triggerInteractiveCheckinModal();
+            }
         }
     }
 }
@@ -207,7 +233,7 @@ function triggerInteractiveCheckinModal() {
     `;
 
     showBipModal("Hydration Check-in", html, footer);
-    setTimeout(populateWaterVolumeSelects, 100);
+    populateWaterVolumeSelects();
 }
 
 function submitModalCheckin() {
@@ -253,15 +279,23 @@ function saveHydrationConfiguration() {
         return;
     }
 
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('water_reminder_triggered_')) {
+            localStorage.removeItem(key);
+        }
+    });
+    localStorage.removeItem('water_checkin_triggered_today');
+
     localStorage.setItem('water_target_goal', targetSelect.value);
     localStorage.setItem('water_checkin_time', checkSelect.value || "");
     localStorage.setItem('water_scheduled_times', JSON.stringify(scheduledTimesList));
     localStorage.setItem('water_configured', 'true');
-    localStorage.setItem('water_hub_optin', 'false');
+    localStorage.setItem('water_hub_optin', 'true');
 
     document.getElementById('hydrationConfigContainer').classList.add('d-none');
 
     updateDashboardDisplay();
+    checkHydrationReminders();
 }
 
 function logWaterIntake() {
@@ -337,9 +371,12 @@ function updateDashboardDisplay() {
     const targetGoalStr = localStorage.getItem('water_target_goal') || '2.5 L';
     const consumedStr = localStorage.getItem('water_consumed_today');
     const isConfigured = localStorage.getItem('water_configured') === 'true';
+    const isHubOptIn = localStorage.getItem('water_hub_optin') !== 'false';
 
-    if (isConfigured) {
+    if (isConfigured && isHubOptIn) {
         document.getElementById('hydrationConfigContainer').classList.add('d-none');
+        document.getElementById('hydrationDashboardView').classList.remove('d-none');
+        document.getElementById('hydrationHistoryView').classList.remove('d-none');
         document.getElementById('waterHistoryManagementContainer').classList.remove('d-none');
 
         if (consumedStr !== null && consumedStr !== '') {
@@ -379,6 +416,8 @@ function updateDashboardDisplay() {
         document.getElementById('hydrationHubContent').classList.add('d-none');
         
         document.getElementById('hydrationIntakeContainer').classList.add('d-none');
+        document.getElementById('hydrationDashboardView').classList.add('d-none');
+        document.getElementById('hydrationHistoryView').classList.add('d-none');
         document.getElementById('waterHistoryManagementContainer').classList.add('d-none');
     }
 }
@@ -386,6 +425,12 @@ function updateDashboardDisplay() {
 function renderTrendChart() {
     const history = JSON.parse(localStorage.getItem('water_metrics_history') || '[]');
     const today = new Date();
+
+    const trendSvg = document.getElementById('trendSvgCanvas');
+    const svgWidth = 700;
+    const actualTrendWidth = (trendSvg && trendSvg.clientWidth > 0) ? trendSvg.clientWidth : svgWidth;
+    const trendScaleX = svgWidth / actualTrendWidth;
+    const isTrendNarrow = actualTrendWidth < 460;
     
     let polylinePoints = [];
     let dynamicGroup = document.getElementById('trendDynamicElements');
@@ -403,7 +448,11 @@ function renderTrendChart() {
         
         const xCoord = 50 + i * 100;
         let labelColor = (i === 6) ? "var(--accent-color)" : "#a0aec0";
-        dynamicGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="12" font-weight="bold" text-anchor="middle">${dayNumber}</text>`;
+
+        const showLabel = !isTrendNarrow || i === 6 || i % 2 === 0;
+        if (showLabel) {
+            dynamicGroup.innerHTML += `<text x="${xCoord}" y="225" fill="${labelColor}" font-size="${isTrendNarrow ? '10' : '12'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${trendScaleX}, 1) translate(${-xCoord}, 0)">${dayNumber}</text>`;
+        }
 
         const logEntry = history.find(item => item.date === dateStr);
         if (logEntry && logEntry.volume !== undefined && logEntry.volume !== null) {
@@ -416,8 +465,7 @@ function renderTrendChart() {
 
             polylinePoints.push(`${xCoord},${yCoord}`);
 
-            let circleColor = (i === 6) ? "var(--bg-card, #1e1e1e)" : "var(--accent-color)";
-            let strokeAttr = (i === 6) ? `stroke="var(--accent-color)" stroke-width="3"` : "";
+            let circleColor = "var(--accent-color)";
             let textColor = (i === 6) ? "var(--accent-color)" : "currentColor";
 
             let textYCoord = yCoord - 12;
@@ -426,8 +474,8 @@ function renderTrendChart() {
             }
 
             dynamicGroup.innerHTML += `
-                <circle cx="${xCoord}" cy="${yCoord}" r="5" fill="${circleColor}" ${strokeAttr} />
-                <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="11" font-weight="bold" text-anchor="middle">${vol.toFixed(1)}L</text>
+                <circle cx="${xCoord}" cy="${yCoord}" r="${isTrendNarrow ? '4.5' : '5'}" fill="${circleColor}" />
+                <text x="${xCoord}" y="${textYCoord}" fill="${textColor}" font-size="${isTrendNarrow ? '9.5' : '11'}" font-weight="bold" text-anchor="middle" transform="translate(${xCoord}, 0) scale(${trendScaleX}, 1) translate(${-xCoord}, 0)">${vol.toFixed(1)}L</text>
             `;
         }
     }

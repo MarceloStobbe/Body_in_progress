@@ -471,7 +471,22 @@ body[data-theme="light"] .theme-text-title,
     }
 
 
-
+[data-theme="light"] #profileForm .form-control,
+    .light-theme #profileForm .form-control,
+    body[data-theme="light"] input#name,
+    body[data-theme="light"] input#birth_date {
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        border-color: #cccccc !important;
+    }
+    [data-theme="light"] #profileForm .form-control::placeholder,
+    .light-theme #profileForm .form-control::placeholder {
+        color: #666666 !important;
+    }
+    [data-theme="light"] #profileForm .form-control::-webkit-calendar-picker-indicator,
+    .light-theme #profileForm .form-control::-webkit-calendar-picker-indicator {
+        filter: none !important;
+    }
 
 
     

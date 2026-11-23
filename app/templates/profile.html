@@ -1,39 +1,77 @@
 {% extends "base.html" %}
 {% block title %}Body in Progress | {% if show_password_only %}Edit Password{% else %}Complete Your Profile{% endif %}{% endblock %}
 {% block content %}
+
+
 <div class="row justify-content-center align-items-center py-">
     <div class="col-lg-8">
         
         {% if not show_password_only %}
         <div class="p-4 p-md-5 rounded-4 shadow-lg" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 4px solid var(--accent-color);">
             
-            <div class="text-center mb-0">
-                <h2 class="fw-bold text-light">Complete Your <span style="color: var(--accent-color);">Profile</span></h2>
-                <p class="text-light small" style="opacity: 0.75;">Update your name, birth date, height, and profile photo to keep your personal profile details up to date.</p>
+            <div class="text-center mb-3">
+                <h2 class="fw-bold text-light">Edit Your <span style="color: var(--accent-color);">Profile</span></h2>
+                <p class="text-light small" style="opacity: 0.75;">Update your name, birth date, and profile photo to keep your personal profile details up to date.</p>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.profile') }}">
+            <form id="profileForm" method="POST" enctype="multipart/form-data" action="{{ url_for('main.profile') }}">
                 
                 <div class="row g-3">
                     <div class="col-md-12 mb-3">
                         <label for="name" class="form-label text-light small fw-bold">Full Name</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary" id="name" name="name" value="{{ user.username if hasattr(user, 'username') and user.username else (user.name if hasattr(user, 'name') and user.name else user_name) }}" style="background-color: #000000 !important;" placeholder="Your Full Name">
+                        <input type="text" class="form-control text-light border-secondary" id="name" name="name" value="{{ user.username if hasattr(user, 'username') and user.username else (user.name if hasattr(user, 'name') and user.name else user_name) }}" placeholder="Your Full Name">
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label for="birth_date" class="form-label text-light small fw-bold">Birth Date</label>
-                        <input type="date" class="form-control bg-dark text-light border-secondary" id="birth_date" name="birth_date" value="{{ user.birth_date.strftime('%Y-%m-%d') if hasattr(user, 'birth_date') and user.birth_date else (user.birth_date if hasattr(user, 'birth_date') and user.birth_date else '') }}" style="background-color: #000000 !important;">
+                        <input type="date" class="form-control text-light border-secondary" id="birth_date" name="birth_date" value="{{ user.birth_date.strftime('%Y-%m-%d') if hasattr(user, 'birth_date') and user.birth_date else (user.birth_date if hasattr(user, 'birth_date') and user.birth_date else '') }}">
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label for="height" class="form-label text-light small fw-bold">Height (m)</label>
-                        <input type="text" class="form-control text-light border-secondary" id="height" name="height" value="{{ user.height if hasattr(user, 'height') and user.height else '' }}" placeholder="1.78" pattern="[0-9]+([,\.][0-9]+)?" title="Please insert a valid value with up to 2 decimal places (e.g., 1.78)">
-                    </div>
+                    {% set existing_photo = user.profile_photo if hasattr(user, 'profile_photo') and user.profile_photo else (user_profile_photo if user_profile_photo else '') %}
 
                     <div class="col-md-12 mb-4">
-                        <label for="profile_photo" class="form-label text-light small fw-bold">Profile Photo</label>
-                        <input type="file" class="form-control bg-dark text-light border-secondary" id="profile_photo" name="profile_photo" accept="image/*" style="background-color: #000000 !important;">
-                        <div class="form-text text-muted small mt-1">Upload a clear portrait photo for your transformation archive.</div>
+                        <label class="form-label text-light small fw-bold d-block text-center mb-2">Profile Photo</label>
+
+                        <div class="d-flex flex-column align-items-center">
+                            <div id="photoPreviewCircle"
+                                class="rounded-circle overflow-hidden position-relative d-flex align-items-center justify-content-center shadow"
+                                style="width: 160px; height: 160px; border: 3px solid var(--accent-color); background-color: #000000; cursor: grab; user-select: none;">
+                                
+                                {% if existing_photo %}
+                                    <img id="existingProfileImg"
+                                        src="{{ url_for('static', filename='uploads/profile_photos/' + existing_photo) }}"
+                                        alt="Profile Photo"
+                                        style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">
+                                {% else %}
+                                    <div id="photoPlaceholderIcon" class="text-center" style="color: var(--text-muted); pointer-events: none;">
+                                        <i class="bi bi-person-circle" style="font-size: 4.5rem; color: var(--accent-color); opacity: 0.7;"></i>
+                                    </div>
+                                {% endif %}
+
+                                <canvas id="photoCropCanvas" width="160" height="160" class="d-none" style="width: 160px; height: 160px; display: block;"></canvas>
+                            </div>
+
+                            <div id="photoZoomControls" class="w-100 mt-3 d-none" style="max-width: 260px;">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <i class="bi bi-zoom-out small text-light"></i>
+                                    <input type="range" class="form-range" id="photoZoomSlider" min="1" max="3" step="0.02" value="1">
+                                    <i class="bi bi-zoom-in small text-light"></i>
+                                </div>
+                                <div class="text-center small text-muted" style="font-size: 0.72rem;">Drag to reposition & use slider to zoom</div>
+                            </div>
+
+                            <input type="file" class="d-none" id="profile_photo" name="profile_photo" accept="image/*">
+
+                            <div class="mt-3">
+                                <button type="button" id="triggerPhotoSelectBtn" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow-sm"
+                                    style="background-color: rgba(212, 175, 55, 0.15); color: var(--accent-color); border: 1px solid var(--accent-color);">
+                                    <i class="bi bi-camera-fill me-1"></i>
+                                    {% if existing_photo %}Edit Photo{% else %}Choose Photo{% endif %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-text text-muted small text-center mt-2">Upload a clear portrait photo for your transformation archive.</div>
                     </div>
                 </div>
 
@@ -91,4 +129,8 @@
 
     </div>
 </div>
+
+{% if not show_password_only %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endif %}
 {% endblock %}

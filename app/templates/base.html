@@ -12,14 +12,36 @@
 
     <header class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
         <div class="container">
-            <div class="d-flex align-items-center justify-content-between w-100 px-2 px-sm-0">
+            <div class="d-flex align-items-center justify-content-between w-100 px-2 px-sm-0 gap-2">
                 <a class="navbar-brand fw-bold fs-4 text-decoration-none m-0" href="{{ url_for('main.dashboard') if is_logged_in else url_for('main.index') }}">
                     <span class="d-inline d-sm-none" style="color: var(--accent-color);">BIP</span>
                     <span class="d-none d-sm-inline">BODY IN <span style="color: var(--accent-color);">PROGRESS</span></span>
                 </a>
                 
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap justify-content-end">
                     {% if is_logged_in %}
+                        <div id="headerRadioBar" class="d-none align-items-center gap-2 px-2 py-1 rounded-pill shadow-sm"
+                            style="background-color: rgba(212, 175, 55, 0.12); border: 1px solid var(--accent-color); max-width: 260px;">
+                            <a id="headerRadioLink" href="{{ url_for('main.playlist') }}"
+                                class="d-flex align-items-center gap-1 text-decoration-none text-truncate small fw-semibold"
+                                style="color: var(--text-main); max-width: 155px;" title="Open Training Playlist">
+                                <i class="bi bi-broadcast" style="color: var(--accent-color);"></i>
+                                <span id="headerRadioName" class="text-truncate">Radio</span>
+                            </a>
+                            <button type="button" id="headerRadioToggleBtn"
+                                class="btn btn-sm p-0 d-flex align-items-center justify-content-center rounded-circle"
+                                style="width: 24px; height: 24px; background-color: var(--accent-color); color: #111;"
+                                title="Play / Pause Radio">
+                                <i id="headerRadioToggleIcon" class="bi bi-pause-fill" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button type="button" id="headerRadioCloseBtn"
+                                class="btn btn-sm p-0 d-flex align-items-center justify-content-center rounded-circle btn-outline-secondary"
+                                style="width: 24px; height: 24px; border-color: rgba(255,255,255,0.25); color: var(--text-main);"
+                                title="Stop & Close Radio">
+                                <i class="bi bi-x" style="font-size: 0.85rem;"></i>
+                            </button>
+                        </div>
+
                         <a href="{{ url_for('main.bip') }}" class="btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center text-decoration-none shadow-sm" style="width: 36px; height: 36px; background-color: color-mix(in srgb, var(--accent-color) 15%, transparent); border: 2px solid var(--accent-color);" title="BIP Social Feed">
                             <span class="fw-bold" style="font-size: 0.65rem; color: var(--accent-color); letter-spacing: -0.5px;">BIP</span>
                         </a>

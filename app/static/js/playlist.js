@@ -9,6 +9,7 @@ const ALL_PRESETS = [
 
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedPlaylistState();
+    bindHeaderRadioBridge();
 });
 
 function showBipModal(title, htmlContent, customFooter = null) {
@@ -224,6 +225,7 @@ function renderActivePlayer() {
 function renderRadioPlayerCard(radioObj) {
     const container = document.getElementById('activeRadioContainer');
     const streamUrl = radioObj.stream;
+    const isClosed = localStorage.getItem('bip_header_radio_closed') === 'true';
 
     container.innerHTML = `
         <div class="p-4 text-center rounded-4 theme-box-toggle border border-secondary shadow-sm">
@@ -234,17 +236,86 @@ function renderRadioPlayerCard(radioObj) {
             <p class="small theme-text-sub text-light-adapt mb-3">Live Workout Radio Station</p>
             
             <div class="d-flex flex-column align-items-center gap-3">
-                <audio controls autoplay class="w-100 rounded-3" style="max-width: 500px;" src="${streamUrl}">
+                <audio id="workoutRadioAudio" controls ${isClosed ? '' : 'autoplay'} class="w-100 rounded-3" style="max-width: 500px;" src="${streamUrl}">
                     Your browser does not support the audio element.
                 </audio>
             </div>
         </div>
     `;
+
+    const audioEl = document.getElementById('workoutRadioAudio');
+    const globalAudio = document.getElementById('bipGlobalRadioAudio');
+
+    if (audioEl) {
+        audioEl.addEventListener('play', () => {
+            if (globalAudio) {
+                globalAudio.pause();
+            }
+            localStorage.setItem('bip_header_radio_closed', 'false');
+            localStorage.setItem('bip_header_radio_playing', 'true');
+            localStorage.setItem('bip_header_radio_station', JSON.stringify({
+                id: radioObj.id,
+                name: radioObj.name,
+                stream: radioObj.stream
+            }));
+            window.dispatchEvent(new CustomEvent('bipRadioStateChanged'));
+        });
+
+        audioEl.addEventListener('pause', () => {
+            localStorage.setItem('bip_header_radio_playing', 'false');
+            window.dispatchEvent(new CustomEvent('bipRadioStateChanged'));
+        });
+
+        if (!isClosed) {
+            audioEl.play().catch(() => {});
+        }
+    }
 }
 
 function selectRadioStation(id) {
     localStorage.setItem('bip_active_playlist_id', id);
+    localStorage.setItem('bip_header_radio_closed', 'false');
+    localStorage.setItem('bip_header_radio_playing', 'true');
+
+    const playlists = JSON.parse(localStorage.getItem('bip_playlists_list') || '[]');
+    const selectedPl = playlists.find(p => p.id === id);
+    if (selectedPl) {
+        localStorage.setItem('bip_header_radio_station', JSON.stringify({
+            id: selectedPl.id,
+            name: selectedPl.name,
+            stream: selectedPl.stream
+        }));
+    }
+
     renderActivePlayer();
+    window.dispatchEvent(new CustomEvent('bipRadioStateChanged'));
+}
+
+function bindHeaderRadioBridge() {
+    window.addEventListener('bipHeaderRadioCommand', (e) => {
+        const action = e && e.detail ? e.detail.action : null;
+        const audioEl = document.getElementById('workoutRadioAudio');
+
+        if (action === 'play') {
+            if (audioEl) {
+                audioEl.play().catch(() => {});
+            }
+        } else if (action === 'pause') {
+            if (audioEl) {
+                audioEl.pause();
+            }
+        } else if (action === 'close') {
+            if (audioEl) {
+                audioEl.pause();
+                audioEl.removeAttribute('src');
+                audioEl.load();
+            }
+            const activeId = localStorage.getItem('bip_active_playlist_id');
+            if (activeId) {
+                renderActivePlayer();
+            }
+        }
+    });
 }
 
 function renamePlaylist(id) {
@@ -289,6 +360,9 @@ function deletePlaylist(id) {
             localStorage.setItem('bip_active_playlist_id', playlists[0].id);
         } else {
             localStorage.removeItem('bip_active_playlist_id');
+            localStorage.removeItem('bip_header_radio_station');
+            localStorage.setItem('bip_header_radio_playing', 'false');
+            window.dispatchEvent(new CustomEvent('bipRadioStateChanged'));
         }
     }
     
@@ -312,4 +386,3 @@ function loadSavedPlaylistState() {
         document.getElementById('playlistDashboardView').classList.add('d-none');
     }
 }
-

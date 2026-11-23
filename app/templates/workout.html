@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <div id="workoutConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3">
+        <div id="workoutConfigContainer" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0">
             <div class="d-flex align-items-center justify-content-between p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
                 <div>
                     <h6 class="fw-bold mb-1 theme-text-title"><i class="bi bi-sliders me-2" style="color: var(--accent-color);"></i>Workout Configuration Hub</h6>
@@ -50,7 +50,7 @@
                 <div id="customConfigSection">
                     <div class="mb-4" style="max-width: 300px;">
                         <label class="small fw-bold theme-text-title mb-1">Number of Routines</label>
-                        <span class="small theme-text-sub d-block text-nowrap mb-1">Select how many custom workout routines to build.</span>
+                        <span class="small theme-text-sub d-block mb-1">Select how many custom workout routines to build.</span>
                         <select id="routineCountSelect" class="form-select border-secondary custom-select-dropdown" onchange="generateRoutineConfigurations(); this.size=1; this.blur();"
                             onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="1">1 Routine</option>
@@ -69,7 +69,7 @@
                 <div id="presetConfigSection" class="d-none">
                     <div class="mb-4" style="max-width: 390px;">
                         <label class="small fw-bold theme-text-title mb-1">Select Professional Level</label>
-                        <span class="small theme-text-sub d-block text-nowrap mb-1">Choose your experience level and execution style.</span>
+                        <span class="small theme-text-sub d-block mb-1">Choose your experience level and execution style.</span>
                         <select id="presetLevelSelect" class="form-select border-secondary custom-select-dropdown" onchange="loadPresetRoutineConfiguration(); this.size=1; this.blur();"
                             onfocus="this.size=Math.min(this.options.length, 5);" onblur="this.size=1;">
                             <option value="beginner" selected>Beginner (Foundational Split - 3 Days)</option>
@@ -125,7 +125,7 @@
             </div>
         </div>
 
-        <div id="workoutDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
+        <div id="workoutDashboardView" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-journal-bookmark-fill me-2" style="color: var(--accent-color);"></i>Select Workout Routine</h5>
                 <button type="button" class="btn btn-sm btn-secondary px-3 rounded-pill" onclick="openWorkoutConfigurationHub()">
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <div id="activeExecutionPanel" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3 d-none">
+        <div id="activeExecutionPanel" class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-0 d-none">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-card-checklist me-2" style="color: var(--accent-color);"></i>Live Execution & Weight Log</h5>
                 <span id="activeRoutineTitleBadge" class="badge fs-6 px-3 py-1" style="background-color: var(--accent-color); color: #111;">Routine 1</span>
@@ -198,6 +198,25 @@
 
             <div id="workoutLogsListSection" class="d-none pt-2">
                 <p class="small theme-text-sub mb-2">Select a date below to load, view and edit the detailed exercises, sets, weights and sequences performed on that day:</p>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="toggleAddPastWorkoutLogForm()" style="background-color: var(--accent-color); color: #111;">
+                        <i class="bi bi-plus-circle me-1"></i> Add Log
+                    </button>
+                </div>
+
+                <div id="addPastWorkoutLogFormSection" class="d-none p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+                    <label class="small fw-bold theme-text-title mb-1">Select Log Date</label>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <input type="date" id="newWorkoutLogDateInput" class="form-control form-control-sm theme-card theme-text-title border-secondary" style="max-width: 220px;">
+                        <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow" onclick="openWorkoutLogForNewDate()" style="background-color: var(--accent-color); color: #111;">
+                            Continue
+                        </button>
+                        <button type="button" class="btn btn-sm px-3 py-2 fw-bold rounded-pill btn-secondary" onclick="document.getElementById('addPastWorkoutLogFormSection').classList.add('d-none')">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
                 <div id="workoutLoggedDatesContainer" class="d-flex flex-column gap-2 mb-3"></div>
             </div>
 
@@ -306,6 +325,239 @@
         </div>
     </div>
 </div>
+
+<template id="tplRoutineConfigCard">
+    <div class="p-3 rounded-3 theme-box-toggle border border-secondary">
+        <div class="mb-3">
+            <label class="small fw-bold theme-text-title mb-1 routine-name-label"></label>
+            <input type="text" class="form-control theme-card theme-text-title routine-name-input">
+        </div>
+        <div class="d-flex flex-column gap-3 mb-3 routine-areas-container"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill fw-bold add-area-btn" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+            <i class="bi bi-plus-circle me-1"></i> Add Body Area / Muscle Group
+        </button>
+    </div>
+</template>
+
+<template id="tplPresetRoutineCard">
+    <div class="p-3 rounded-3 theme-box-toggle border border-secondary">
+        <h6 class="fw-bold mb-2 preset-routine-title" style="color: var(--accent-color);"></h6>
+        <div class="mb-2 preset-routine-summary"></div>
+    </div>
+</template>
+
+<template id="tplBodyAreaBlock">
+    <div class="p-3 rounded-3 border border-secondary theme-card body-area-block">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <select class="form-select form-select-sm w-75 theme-card theme-text-title custom-select-dropdown mg-select"></select>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 remove-area-btn" style="font-size: 0.75rem;">Remove</button>
+        </div>
+        <div class="mb-2 exercises-checkbox-list" style="max-height: 180px; overflow-y: auto;"></div>
+        <div class="text-end">
+            <button type="button" class="btn btn-sm btn-link text-decoration-none text-warning p-0 add-custom-ex-btn" style="font-size: 0.8rem;">
+                <i class="bi bi-plus-circle me-1"></i> Add Custom Exercise
+            </button>
+        </div>
+    </div>
+</template>
+
+<template id="tplExerciseCheckboxRow">
+    <div class="form-check d-flex justify-content-between align-items-center pe-2">
+        <div>
+            <input class="form-check-input ex-checkbox" type="checkbox">
+            <label class="form-check-label small theme-text-title ex-checkbox-label"></label>
+        </div>
+        <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm view-photo-btn" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
+        </div>
+    </div>
+</template>
+
+<template id="tplDashboardRoutineCol">
+    <div class="col-md-6">
+        <div class="card theme-card p-3 h-100 rounded-3 routine-card-box">
+            <span class="badge bg-warning text-dark mb-2 d-none up-next-badge">Up Next Today</span>
+            <br class="d-none up-next-br">
+            <h6 class="fw-bold mb-2 routine-title" style="color: var(--accent-color);"></h6>
+            <div class="mb-3 flex-grow-1 routine-exercises-summary"></div>
+            <button type="button" class="btn btn-sm btn-outline-success fw-bold rounded-pill w-100 perform-routine-btn">
+                <i class="bi bi-play-fill me-1"></i> Perform Routine
+            </button>
+        </div>
+    </div>
+</template>
+
+<template id="tplActiveExerciseCard">
+    <div class="card theme-card border-secondary p-3 mb-3 rounded-3 exercise-log-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <strong class="theme-text-title fs-6 ex-name-label"></strong>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm ex-photo-btn" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary d-none saved-badge">Saved</span>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 delete-ex-btn" style="font-size: 0.75rem;">Delete</button>
+            </div>
+        </div>
+        <div class="small theme-text-sub mb-2 d-none last-ref-box" style="font-size: 0.75rem;">
+            <i class="bi bi-clock-history me-1 text-warning"></i>Last session reference: <strong class="last-ref-text"></strong>
+        </div>
+        <div class="d-flex flex-column gap-2 mb-3 sets-container"></div>
+        <div class="d-flex justify-content-between align-items-center">
+            <button type="button" class="btn btn-sm btn-link text-decoration-none text-warning p-0 add-set-btn" style="font-size: 0.8rem;">
+                <i class="bi bi-plus-circle me-1"></i> Add Set
+            </button>
+            <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow save-ex-btn" style="background-color: var(--accent-color); color: #111; font-size: 0.8rem;">
+                Save Exercise
+            </button>
+        </div>
+    </div>
+</template>
+
+<template id="tplSetRow">
+    <div class="row g-2 align-items-center set-row">
+        <div class="col-3"><span class="small theme-text-sub set-label"></span></div>
+        <div class="col-4">
+            <div class="input-group input-group-sm">
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm theme-card theme-text-title set-kg">
+                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="input-group input-group-sm">
+                <input type="number" step="1" min="0" class="form-control form-control-sm theme-card theme-text-title set-reps">
+                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tplMuscleChartCard">
+    <div class="card rounded-4 shadow-lg border-secondary theme-card p-4 mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+            <h5 class="fw-bold theme-text-title mb-0"><i class="bi bi-graph-up me-2" style="color: var(--accent-color);"></i><span class="chart-mg-title"></span></h5>
+            <div style="max-width: 240px;">
+                <select class="form-select form-select-sm border-secondary theme-card theme-text-title custom-select-dropdown chart-ex-select"></select>
+            </div>
+        </div>
+        <div class="mb-3 p-2 rounded-3 theme-box-toggle border border-secondary text-center small fw-bold pr-badge-box" style="color: var(--accent-color);">
+            <i class="bi bi-trophy-fill me-1"></i> <span class="pr-badge-text">Personal Record (PR): --</span>
+        </div>
+        <div class="p-3 rounded-3 theme-box-toggle border border-secondary mb-3">
+            <div class="d-flex" style="height: 220px;">
+                <div class="d-flex flex-column justify-content-between text-end pe-2 theme-text-sub small fw-bold chart-y-axis" style="width: 55px; font-size: 0.75rem; height: 180px; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                <div class="position-relative flex-grow-1" style="height: 220px;">
+                    <div class="position-absolute w-100 d-flex flex-column justify-content-between top-0 start-0" style="height: 180px; pointer-events: none; opacity: 0.15;">
+                        <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                        <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                        <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                        <div style="border-bottom: 1px dashed currentColor; width: 100%;"></div>
+                        <div style="border-bottom: 1px solid currentColor; width: 100%;"></div>
+                    </div>
+                    <svg class="position-absolute w-100 h-100 top-0 start-0 chart-svg" style="z-index: 2;" viewBox="0 0 700 220" preserveAspectRatio="none">
+                        <polyline fill="none" stroke="var(--accent-color)" stroke-width="3" points="" class="chart-polyline" />
+                        <g class="chart-points-group"></g>
+                    </svg>
+                </div>
+            </div>
+            <div class="text-center mt-3"><span class="small theme-text-sub chart-desc">Displaying average weight reference per repetition volume.</span></div>
+        </div>
+        <div class="p-3 rounded-3 theme-box-toggle border border-secondary">
+            <h6 class="fw-bold small theme-text-title mb-1"><i class="bi bi-info-circle-fill me-1" style="color: var(--accent-color);"></i>Progression Tracking & Analytics</h6>
+            <p class="small theme-text-sub mb-0 chart-info-text"></p>
+        </div>
+    </div>
+</template>
+
+<template id="tplLoggedDateWrapper">
+    <div class="d-flex flex-column gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 date-log-btn" style="border-color: rgba(255,255,255,0.2); color: var(--text-color); background-color: var(--bg-input, rgba(0,0,0,0.2));">
+            <span><i class="bi bi-calendar-event me-2" style="color: var(--accent-color);"></i><span class="date-log-label"></span></span>
+            <span class="small theme-text-sub">View & Edit</span>
+        </button>
+    </div>
+</template>
+
+<template id="tplEditExerciseCard">
+    <div class="p-3 rounded-3 border border-secondary theme-card edit-ex-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <strong class="theme-text-title small edit-ex-title"></strong>
+                <div class="d-flex gap-1 edit-photo-wrapper">
+                    <button type="button" class="btn btn-sm py-0 px-1 fw-bold shadow-sm edit-photo-btn" title="View Photo" style="font-size: 0.75rem; background-color: rgba(212, 175, 55, 0.2); border: 1px solid var(--accent-color); color: var(--accent-color);"><i class="bi bi-image"></i></button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 delete-edit-ex-btn" style="font-size: 0.75rem;">Delete Exercise</button>
+        </div>
+        <div class="d-flex flex-column gap-1 edit-sets-container mb-2"></div>
+        <div>
+            <button type="button" class="btn btn-sm btn-link text-decoration-none text-warning p-0 add-edit-set-btn" style="font-size: 0.8rem;">
+                <i class="bi bi-plus-circle me-1"></i> Add Set
+            </button>
+        </div>
+    </div>
+</template>
+
+<template id="tplEditSetRow">
+    <div class="row g-2 align-items-center mb-1 edit-set-row">
+        <div class="col-3"><span class="small theme-text-sub edit-set-label"></span></div>
+        <div class="col-4">
+            <div class="input-group input-group-sm">
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm theme-card theme-text-title edit-set-kg">
+                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">kg</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="input-group input-group-sm">
+                <input type="number" step="1" min="0" class="form-control form-control-sm theme-card theme-text-title edit-set-reps">
+                <span class="input-group-text theme-card theme-text-title border-secondary small px-2">reps</span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tplMediaShowcase">
+    <div class="text-center">
+        <div class="d-flex flex-column align-items-center gap-3 media-images-list"></div>
+    </div>
+</template>
+
+<template id="tplCustomMediaView">
+    <div class="text-center">
+        <img class="img-fluid rounded-3 shadow mb-3 custom-media-img" style="max-height: 280px; object-fit: contain;">
+        <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow change-photo-btn" style="background-color: var(--accent-color); color: #111;">Change Photo</button>
+        </div>
+    </div>
+</template>
+
+<template id="tplPhotoEditForm">
+    <div class="mb-3">
+        <label class="small fw-bold theme-text-title mb-1">Add Photo URL or File</label>
+        <input type="text" id="mediaUrlInputField" class="form-control form-control-sm theme-card theme-text-title mb-2" placeholder="Paste image URL (e.g., https://...)">
+        <div class="text-center small theme-text-sub my-2">- OR upload file -</div>
+        <input type="file" id="mediaFileInputField" class="form-control form-control-sm theme-card theme-text-title" accept="image/*">
+    </div>
+</template>
+
+<template id="tplPhotoEditFooter">
+    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <button type="button" class="btn btn-sm px-4 py-2 fw-bold rounded-pill shadow save-photo-btn" style="background-color: var(--accent-color); color: #111;">Save Photo</button>
+</template>
+
+<template id="tplFinishWorkoutBody">
+    <div>
+        <p class="small theme-text-sub mb-3">🏆 Great Job! Total workout time: <strong class="text-warning finish-time-val"></strong>.</p>
+        <p class="small theme-text-sub mb-0">Would you like to finish and save this workout session?</p>
+    </div>
+</template>
+
+<template id="tplFinishWorkoutFooter">
+    <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow confirm-finish-btn" style="background-color: var(--accent-color); color: #111;">Confirm & Save</button>
+    <button type="button" class="btn btn-sm px-4 fw-bold rounded-pill shadow btn-secondary" data-bs-dismiss="modal">Cancel (Keep Running)</button>
+</template>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/workout.css') }}">
 <script src="{{ url_for('static', filename='js/workout.js') }}"></script>
