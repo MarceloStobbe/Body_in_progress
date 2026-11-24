@@ -488,6 +488,73 @@ body[data-theme="light"] .theme-text-title,
         filter: none !important;
     }
 
+    body.bip-page footer,
+    body.bip-page .footer,
+    body.bip-page #footer,
+    body.bip-page .app-footer {
+        display: none !important;
+    }
+
+    body.bip-story-viewing #stories-bar,
+    body.bip-story-viewing #feed-container,
+    body.bip-story-viewing #bipBottomNav,
+    body.bip-story-viewing #bipPostingStatusBanner {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .bip-bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 12px;
+        z-index: 1030;
+        pointer-events: none;
+    }
+
+    .bip-posting-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 78px;
+        transform: translateX(-50%);
+        z-index: 1080;
+        background-color: rgba(18, 18, 18, 0.92);
+        color: var(--text-main);
+        border: 1px solid var(--accent-color);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+    }
+
+    .bip-music-item {
+        background-color: var(--bg-card) !important;
+        color: var(--text-main) !important;
+        border-color: rgba(148, 163, 184, 0.25) !important;
+    }
+
+    .bip-music-item:hover,
+    .bip-music-item:focus {
+        background-color: rgba(212, 175, 55, 0.14) !important;
+        color: var(--text-main) !important;
+    }
+
+    .bip-music-artist {
+        color: var(--text-muted) !important;
+    }
+
+    .bip-story-backdrop {
+        background-color: #0b0d10 !important;
+    }
+
+    .bip-story-date {
+        color: rgba(248, 250, 252, 0.85) !important;
+    }
+
 
     
     

@@ -1,6 +1,9 @@
 let uploadedMediaUrl = null;
 let uploadedFileObject = null;
 let isVideoMedia = false;
+let mediaNaturalWidth = 0;
+let mediaNaturalHeight = 0;
+
 const userPhotoUrl = window.userProfilePhotoUrl || "";
 const currentLoggedInUserName = window.currentUserName || "Marcelo Stobbe";
 
@@ -8,7 +11,9 @@ let zoomLevel = 100;
 let panX = 0;
 let panY = 0;
 let isDragging = false;
-let startX, startY;
+let dragPointerType = null;
+let startX = 0;
+let startY = 0;
 
 let userStories = window.serverStories || [];
 let userPosts = window.serverPosts || [];
@@ -24,25 +29,313 @@ let userActivities = [];
 let selectedMusicTrack = "";
 let selectedMusicPreviewUrl = "";
 
+let isSubmittingPost = false;
+let activeSubmissionKey = null;
+
+let feedAudioEnabled = false;
+let feedObserver = null;
+let activeFeedMediaBox = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    initPageShell();
+    bindStaticControls();
     renderContent();
     renderServerStories();
+    bindStoryViewerLifecycle();
+    bindModalLifecycle();
 });
 
+function initPageShell() {
+    document.body.classList.add('bip-page');
+    const footerCandidates = document.querySelectorAll('footer, .footer, #footer, .app-footer');
+    footerCandidates.forEach(el => {
+        if (!el.closest('#bipBottomNav')) {
+            el.remove();
+        }
+    });
+}
+
+function stopAllFeedAudio() {
+    const allBoxes = document.querySelectorAll('.bip-feed-media-box');
+    allBoxes.forEach(box => {
+        const audioEl = box.querySelector('audio');
+        const videoEl = box.querySelector('video');
+        const btn = box.querySelector('.bip-feed-audio-btn');
+        const icon = btn ? btn.querySelector('i') : null;
+
+        if (audioEl) {
+            try {
+                audioEl.pause();
+            } catch (err) {}
+        }
+        if (videoEl) {
+            videoEl.muted = true;
+        }
+        if (icon) {
+            icon.className = 'bi bi-volume-mute-fill text-light';
+        }
+    });
+}
+
+function bindStaticControls() {
+    const addStoryTrigger = document.getElementById('addStoryTrigger');
+    if (addStoryTrigger) {
+        addStoryTrigger.addEventListener('click', () => {
+            stopAllFeedAudio();
+            openStoryModal();
+        });
+    }
+
+    const navHomeBtn = document.getElementById('navHomeBtn');
+    if (navHomeBtn) {
+        navHomeBtn.addEventListener('click', () => {
+            stopAllFeedAudio();
+            switchTab('home');
+        });
+    }
+
+    const navFollowingBtn = document.getElementById('navFollowingBtn');
+    if (navFollowingBtn) {
+        navFollowingBtn.addEventListener('click', () => {
+            stopAllFeedAudio();
+            switchTab('following');
+        });
+    }
+
+    const navCreatePostBtn = document.getElementById('navCreatePostBtn');
+    if (navCreatePostBtn) {
+        navCreatePostBtn.addEventListener('click', () => {
+            stopAllFeedAudio();
+            openFeedModal();
+        });
+    }
+
+    const navActivityBtn = document.getElementById('navActivityBtn');
+    if (navActivityBtn) {
+        navActivityBtn.addEventListener('click', () => {
+            stopAllFeedAudio();
+            switchTab('activity');
+        });
+    }
+
+    const postForm = document.getElementById('postForm');
+    if (postForm) {
+        postForm.addEventListener('submit', handlePostSubmit);
+    }
+
+    const mediaInput = document.getElementById('mediaInput');
+    if (mediaInput) {
+        mediaInput.addEventListener('change', previewMedia);
+    }
+
+    const zoomRange = document.getElementById('zoomRange');
+    if (zoomRange) {
+        zoomRange.addEventListener('input', applyMediaTransform);
+    }
+
+    const muteVideoSwitch = document.getElementById('muteVideoSwitch');
+    if (muteVideoSwitch) {
+        muteVideoSwitch.addEventListener('change', toggleVideoMute);
+    }
+
+    const musicSearchInput = document.getElementById('musicSearchInput');
+    if (musicSearchInput) {
+        musicSearchInput.addEventListener('input', (e) => searchMusicTracks(e.target.value));
+    }
+
+    const captionInput = document.getElementById('captionInput');
+    if (captionInput) {
+        captionInput.addEventListener('input', updatePreview);
+    }
+
+    const previewAudioBtn = document.getElementById('previewAudioBtn');
+    if (previewAudioBtn) {
+        previewAudioBtn.addEventListener('click', togglePreviewAudio);
+    }
+
+    const prevStoryBtn = document.getElementById('prevStoryBtn');
+    if (prevStoryBtn) {
+        prevStoryBtn.addEventListener('click', prevStory);
+    }
+
+    const nextStoryBtn = document.getElementById('nextStoryBtn');
+    if (nextStoryBtn) {
+        nextStoryBtn.addEventListener('click', nextStory);
+    }
+
+    const deleteStoryOptionBtn = document.getElementById('deleteStoryOptionBtn');
+    if (deleteStoryOptionBtn) {
+        deleteStoryOptionBtn.addEventListener('click', confirmDeleteStory);
+    }
+
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', executeDelete);
+    }
+}
+
+function bindModalLifecycle() {
+    const createModalEl = document.getElementById('createPostModal');
+    if (createModalEl) {
+        createModalEl.addEventListener('show.bs.modal', () => {
+            stopAllFeedAudio();
+        });
+        createModalEl.addEventListener('hidden.bs.modal', () => {
+            stopPreviewAudio();
+        });
+    }
+}
+
+function stopPreviewAudio() {
+    const audioEl = document.getElementById('previewAudioPlayer');
+    const btn = document.getElementById('previewAudioBtn');
+    if (audioEl) {
+        try {
+            audioEl.pause();
+            audioEl.currentTime = 0;
+        } catch (err) {
+        }
+    }
+    if (btn) {
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'bi bi-volume-mute-fill';
+    }
+}
+
+function syncPreviewAudioButton() {
+    const btn = document.getElementById('previewAudioBtn');
+    const audioEl = document.getElementById('previewAudioPlayer');
+    if (!btn || !audioEl) return;
+
+    if (selectedMusicPreviewUrl) {
+        btn.classList.remove('d-none');
+        btn.classList.add('d-flex');
+        audioEl.src = selectedMusicPreviewUrl;
+    } else {
+        stopPreviewAudio();
+        audioEl.removeAttribute('src');
+        btn.classList.add('d-none');
+        btn.classList.remove('d-flex');
+    }
+}
+
+function togglePreviewAudio() {
+    const audioEl = document.getElementById('previewAudioPlayer');
+    const btn = document.getElementById('previewAudioBtn');
+    if (!audioEl || !selectedMusicPreviewUrl) return;
+
+    const icon = btn ? btn.querySelector('i') : null;
+    if (!audioEl.src) {
+        audioEl.src = selectedMusicPreviewUrl;
+    }
+
+    if (audioEl.paused) {
+        audioEl.loop = true;
+        audioEl.play().then(() => {
+            if (icon) icon.className = 'bi bi-volume-up-fill';
+        }).catch(() => {});
+    } else {
+        audioEl.pause();
+        if (icon) icon.className = 'bi bi-volume-mute-fill';
+    }
+}
+
+function stopActiveStoryAudio() {
+    const mediaContainer = document.getElementById('storyMediaContent');
+    if (!mediaContainer) return;
+
+    const audios = mediaContainer.querySelectorAll('audio');
+    audios.forEach(audioEl => {
+        try {
+            audioEl.pause();
+            audioEl.currentTime = 0;
+            audioEl.removeAttribute('src');
+            audioEl.load();
+        } catch (err) {
+        }
+    });
+
+    const videos = mediaContainer.querySelectorAll('video');
+    videos.forEach(vidEl => {
+        try {
+            vidEl.pause();
+            vidEl.currentTime = 0;
+        } catch (err) {
+        }
+    });
+}
+
+function bindStoryViewerLifecycle() {
+    const viewerModalEl = document.getElementById('storyViewerModal');
+    if (!viewerModalEl) return;
+
+    viewerModalEl.addEventListener('show.bs.modal', () => {
+        stopAllFeedAudio();
+        document.body.classList.add('bip-story-viewing');
+    });
+
+    viewerModalEl.addEventListener('hide.bs.modal', () => {
+        stopActiveStoryAudio();
+        document.body.classList.remove('bip-story-viewing');
+    });
+
+    viewerModalEl.addEventListener('hidden.bs.modal', () => {
+        stopActiveStoryAudio();
+        document.body.classList.remove('bip-story-viewing');
+        const mediaContainer = document.getElementById('storyMediaContent');
+        if (mediaContainer) {
+            mediaContainer.innerHTML = '';
+        }
+    });
+}
+
+function setPostingState(active, labelText = 'Posting...') {
+    isSubmittingPost = active;
+    const banner = document.getElementById('bipPostingStatusBanner');
+    const bannerText = document.getElementById('bipPostingStatusText');
+    const submitBtn = document.getElementById('submitBtnText');
+    const isStoryMode = document.getElementById('modalHeaderTitle').innerText.includes('Story');
+
+    if (banner) {
+        if (active) {
+            if (bannerText) bannerText.innerText = labelText;
+            banner.classList.remove('d-none');
+        } else {
+            banner.classList.add('d-none');
+        }
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = active;
+        if (active) {
+            submitBtn.innerText = isStoryMode ? 'Publishing Story...' : 'Publishing...';
+        } else {
+            activeSubmissionKey = null;
+            submitBtn.innerText = isStoryMode ? 'Publish Story' : 'Publish to BIP';
+        }
+    }
+}
+
 function openStoryModal() {
+    setPostingState(false);
+    stopPreviewAudio();
     document.getElementById('modalHeaderTitle').innerText = 'Create New Story';
     document.getElementById('submitBtnText').innerText = 'Publish Story';
     const previewBox = document.getElementById('previewContainer');
     if (previewBox) previewBox.style.aspectRatio = '1 / 1';
+    applyMediaTransform();
     const modal = new bootstrap.Modal(document.getElementById('createPostModal'));
     modal.show();
 }
 
 function openFeedModal() {
+    setPostingState(false);
+    stopPreviewAudio();
     document.getElementById('modalHeaderTitle').innerText = 'Create New Publication';
     document.getElementById('submitBtnText').innerText = 'Publish to BIP';
     const previewBox = document.getElementById('previewContainer');
     if (previewBox) previewBox.style.aspectRatio = '1 / 1';
+    applyMediaTransform();
     const modal = new bootstrap.Modal(document.getElementById('createPostModal'));
     modal.show();
 }
@@ -92,17 +385,17 @@ function searchMusicTracks(query) {
 
                     const item = document.createElement('button');
                     item.type = 'button';
-                    item.className = 'list-group-item list-group-item-action text-light border-secondary small';
-                    item.style.backgroundColor = '#1a1a1a';
-                    item.innerHTML = `<i class="bi bi-music-note me-2" style="color: var(--accent-color);"></i><strong>${trackName}</strong> <span class="text-muted">by ${artistName}</span>`;
-                    
-                    item.onclick = () => {
+                    item.className = 'list-group-item list-group-item-action bip-music-item small';
+                    item.innerHTML = `<i class="bi bi-music-note me-2" style="color: var(--accent-color);"></i><strong>${trackName}</strong> <span class="bip-music-artist">by ${artistName}</span>`;
+
+                    item.addEventListener('click', () => {
                         selectedMusicTrack = displayString;
                         selectedMusicPreviewUrl = previewUrl || "";
                         document.getElementById('musicSearchInput').value = displayString;
                         resultsContainer.classList.add('d-none');
+                        syncPreviewAudioButton();
                         updatePreview();
-                    };
+                    });
                     resultsContainer.appendChild(item);
                 });
             } else {
@@ -114,6 +407,50 @@ function searchMusicTracks(query) {
         });
 }
 
+function computeCoverDimensions(srcW, srcH, dstW, dstH) {
+    const safeSrcW = srcW || dstW;
+    const safeSrcH = srcH || dstH;
+    const scale = Math.max(dstW / safeSrcW, dstH / safeSrcH);
+    const drawW = safeSrcW * scale;
+    const drawH = safeSrcH * scale;
+    const centerX = (dstW - drawW) / 2;
+    const centerY = (dstH - drawH) / 2;
+    return { drawW, drawH, centerX, centerY };
+}
+
+function clampPanOffsets(srcW, srcH, containerW, containerH) {
+    const zoomScale = zoomLevel / 100;
+    const { drawW, drawH } = computeCoverDimensions(srcW, srcH, containerW, containerH);
+    const scaledW = drawW * zoomScale;
+    const scaledH = drawH * zoomScale;
+
+    const maxPanX = Math.max(0, (scaledW - containerW) / 2);
+    const maxPanY = Math.max(0, (scaledH - containerH) / 2);
+
+    if (panX > maxPanX) panX = maxPanX;
+    if (panX < -maxPanX) panX = -maxPanX;
+    if (panY > maxPanY) panY = maxPanY;
+    if (panY < -maxPanY) panY = -maxPanY;
+}
+
+function getTransformCss(srcW, srcH, containerW, containerH) {
+    clampPanOffsets(srcW, srcH, containerW, containerH);
+    const zoomScale = zoomLevel / 100;
+    const { drawW, drawH, centerX, centerY } = computeCoverDimensions(srcW, srcH, containerW, containerH);
+    const scaledW = drawW * zoomScale;
+    const scaledH = drawH * zoomScale;
+    const left = (containerW - scaledW) / 2 + panX;
+    const top = (containerH - scaledH) / 2 + panY;
+
+    return {
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${scaledW}px`,
+        height: `${scaledH}px`,
+        transform: 'none'
+    };
+}
+
 function previewMedia(event) {
     const file = event.target.files[0];
     const container = document.getElementById('previewContainer');
@@ -123,6 +460,8 @@ function previewMedia(event) {
     zoomLevel = 100;
     panX = 0;
     panY = 0;
+    mediaNaturalWidth = 0;
+    mediaNaturalHeight = 0;
     document.getElementById('zoomRange').value = 100;
     document.getElementById('zoomVal').innerText = "100%";
 
@@ -132,40 +471,47 @@ function previewMedia(event) {
         reader.onload = function(e) {
             uploadedMediaUrl = e.target.result;
             cropControls.classList.remove('d-none');
-            
+
             container.innerHTML = '';
+            const cW = container.clientWidth || 360;
+            const cH = container.clientHeight || 360;
+
             if (file.type.startsWith('video/')) {
                 isVideoMedia = true;
                 muteOption.classList.remove('d-none');
                 const isMuted = document.getElementById('muteVideoSwitch').checked;
-                
+
                 const videoEl = document.createElement('video');
                 videoEl.id = 'transformableMedia';
                 videoEl.src = e.target.result;
-                videoEl.className = 'w-100 h-100 object-fit-cover position-absolute';
-                videoEl.style.top = '0';
-                videoEl.style.left = '0';
-                videoEl.style.transform = 'scale(1) translate(0px, 0px)';
+                videoEl.className = 'position-absolute';
                 videoEl.controls = true;
                 videoEl.autoplay = true;
                 videoEl.muted = isMuted;
+                videoEl.addEventListener('loadedmetadata', () => {
+                    mediaNaturalWidth = videoEl.videoWidth || cW;
+                    mediaNaturalHeight = videoEl.videoHeight || cH;
+                    applyMediaTransform();
+                });
                 container.appendChild(videoEl);
             } else {
                 isVideoMedia = false;
                 muteOption.classList.add('d-none');
-                
+
                 const imgEl = document.createElement('img');
                 imgEl.id = 'transformableMedia';
-                imgEl.src = e.target.result;
-                imgEl.className = 'w-100 h-100 object-fit-cover position-absolute';
-                imgEl.style.top = '0';
-                imgEl.style.left = '0';
-                imgEl.style.transform = 'scale(1) translate(0px, 0px)';
+                imgEl.className = 'position-absolute';
                 imgEl.draggable = false;
+                imgEl.addEventListener('load', () => {
+                    mediaNaturalWidth = imgEl.naturalWidth || cW;
+                    mediaNaturalHeight = imgEl.naturalHeight || cH;
+                    applyMediaTransform();
+                });
+                imgEl.src = e.target.result;
                 container.appendChild(imgEl);
             }
             initDragEvents(container);
-        }
+        };
         reader.readAsDataURL(file);
     } else {
         uploadedMediaUrl = null;
@@ -178,33 +524,67 @@ function previewMedia(event) {
 }
 
 function applyMediaTransform() {
-    zoomLevel = document.getElementById('zoomRange').value;
-    document.getElementById('zoomVal').innerText = zoomLevel + "%";
+    zoomLevel = parseFloat(document.getElementById('zoomRange').value) || 100;
+    document.getElementById('zoomVal').innerText = Math.round(zoomLevel) + "%";
     const media = document.getElementById('transformableMedia');
-    if (media) {
-        media.style.transform = `scale(${zoomLevel / 100}) translate(${panX}px, ${panY}px)`;
+    const container = document.getElementById('previewContainer');
+    if (media && container) {
+        const cW = container.clientWidth || 360;
+        const cH = container.clientHeight || 360;
+        const styles = getTransformCss(mediaNaturalWidth, mediaNaturalHeight, cW, cH);
+        media.style.left = styles.left;
+        media.style.top = styles.top;
+        media.style.width = styles.width;
+        media.style.height = styles.height;
+        media.style.transform = styles.transform;
     }
 }
 
 function initDragEvents(container) {
-    container.addEventListener('mousedown', (e) => {
+    container.onmousedown = (e) => {
+        if (!uploadedMediaUrl) return;
         isDragging = true;
+        dragPointerType = 'mouse';
         container.style.cursor = 'grabbing';
         startX = e.clientX - panX;
         startY = e.clientY - panY;
-    });
+    };
 
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
+    window.onmousemove = (e) => {
+        if (!isDragging || dragPointerType !== 'mouse') return;
         panX = e.clientX - startX;
         panY = e.clientY - startY;
         applyMediaTransform();
-    });
+    };
 
-    window.addEventListener('mouseup', () => {
+    window.onmouseup = () => {
+        if (!isDragging || dragPointerType !== 'mouse') return;
         isDragging = false;
+        dragPointerType = null;
         container.style.cursor = 'grab';
-    });
+    };
+
+    container.ontouchstart = (e) => {
+        if (!uploadedMediaUrl || e.touches.length !== 1) return;
+        isDragging = true;
+        dragPointerType = 'touch';
+        startX = e.touches[0].clientX - panX;
+        startY = e.touches[0].clientY - panY;
+    };
+
+    container.ontouchmove = (e) => {
+        if (!isDragging || dragPointerType !== 'touch' || e.touches.length !== 1) return;
+        e.preventDefault();
+        panX = e.touches[0].clientX - startX;
+        panY = e.touches[0].clientY - startY;
+        applyMediaTransform();
+    };
+
+    container.ontouchend = () => {
+        if (!isDragging || dragPointerType !== 'touch') return;
+        isDragging = false;
+        dragPointerType = null;
+    };
 }
 
 function toggleVideoMute() {
@@ -215,28 +595,111 @@ function toggleVideoMute() {
     }
 }
 
-function toggleFeedAudio(btn) {
-    const icon = btn.querySelector('i');
-    const container = btn.closest('.position-relative');
-    const audioPlayer = container.querySelector('audio');
-    
-    if (audioPlayer) {
-        if (audioPlayer.paused) {
-            audioPlayer.play().then(() => {
-                icon.className = 'bi bi-volume-up-fill text-light';
-            }).catch(err => console.log("Audio play blocked:", err));
-        } else {
-            audioPlayer.pause();
+function silenceAllFeedMedia(exceptBox = null) {
+    const allBoxes = document.querySelectorAll('.bip-feed-media-box');
+    allBoxes.forEach(box => {
+        if (exceptBox && box === exceptBox) return;
+        const audioEl = box.querySelector('audio');
+        const videoEl = box.querySelector('video');
+        const btn = box.querySelector('.bip-feed-audio-btn');
+        const icon = btn ? btn.querySelector('i') : null;
+
+        if (audioEl) {
+            try {
+                audioEl.pause();
+            } catch (err) {}
+        }
+        if (videoEl) {
+            videoEl.muted = true;
+        }
+        if (icon) {
             icon.className = 'bi bi-volume-mute-fill text-light';
         }
+    });
+}
+
+function activateFeedMediaBox(box, forcePlay) {
+    if (!box) return;
+    silenceAllFeedMedia(box);
+    activeFeedMediaBox = box;
+
+    const audioEl = box.querySelector('audio');
+    const videoEl = box.querySelector('video');
+    const btn = box.querySelector('.bip-feed-audio-btn');
+    const icon = btn ? btn.querySelector('i') : null;
+
+    if (videoEl) {
+        videoEl.muted = !feedAudioEnabled;
     }
+
+    if (audioEl) {
+        if (feedAudioEnabled && forcePlay) {
+            audioEl.play().then(() => {
+                if (icon) icon.className = 'bi bi-volume-up-fill text-light';
+            }).catch(() => {});
+        } else {
+            audioEl.pause();
+            if (icon) icon.className = 'bi bi-volume-mute-fill text-light';
+        }
+    } else if (videoEl && icon) {
+        icon.className = feedAudioEnabled ? 'bi bi-volume-up-fill text-light' : 'bi bi-volume-mute-fill text-light';
+    }
+}
+
+function toggleFeedAudio(btn) {
+    const container = btn.closest('.bip-feed-media-box');
+    if (!container) return;
+
+    feedAudioEnabled = !feedAudioEnabled;
+
+    if (!feedAudioEnabled) {
+        silenceAllFeedMedia(null);
+        return;
+    }
+
+    activateFeedMediaBox(container, true);
+}
+
+function initFeedScrollAudioObserver() {
+    if (feedObserver) {
+        feedObserver.disconnect();
+    }
+
+    const boxes = document.querySelectorAll('.bip-feed-media-box');
+    if (!boxes.length || typeof IntersectionObserver === 'undefined') return;
+
+    feedObserver = new IntersectionObserver((entries) => {
+        if (!feedAudioEnabled) {
+            silenceAllFeedMedia(null);
+            return;
+        }
+
+        let bestBox = null;
+        let bestRatio = 0;
+
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+                bestRatio = entry.intersectionRatio;
+                bestBox = entry.target;
+            }
+        });
+
+        if (bestBox && bestRatio >= 0.45) {
+            activeFeedMediaBox = bestBox;
+            activateFeedMediaBox(bestBox, true);
+        } else {
+            silenceAllFeedMedia(null);
+        }
+    }, { threshold: [0.1, 0.45, 0.7] });
+
+    boxes.forEach(box => feedObserver.observe(box));
 }
 
 function formatSimpleDate(dateString) {
     if (!dateString) return 'Just now';
     const postDate = new Date(dateString.replace(' ', 'T'));
     const today = new Date();
-    
+
     const isToday = postDate.getDate() === today.getDate() &&
                     postDate.getMonth() === today.getMonth() &&
                     postDate.getFullYear() === today.getFullYear();
@@ -261,7 +724,7 @@ function switchTab(tabName) {
     renderContent();
 }
 
-function toggleFollowUser(authorName, btn) {
+function toggleFollowUser(authorName) {
     const isFollowing = followingState[authorName] || false;
     followingState[authorName] = !isFollowing;
 
@@ -274,7 +737,7 @@ function toggleFollowUser(authorName, btn) {
     renderContent();
 }
 
-function toggleLikePost(postId, authorName, btn) {
+function toggleLikePost(postId, authorName) {
     const isLiked = likedState[postId] || false;
     likedState[postId] = !isLiked;
 
@@ -332,6 +795,8 @@ function deletePost(postId) {
 
 function openStoryViewerModal(index = 0) {
     if (userStories.length === 0) return;
+    stopAllFeedAudio();
+    stopActiveStoryAudio();
     currentStoryIndex = index;
     renderCurrentStory();
     const modal = new bootstrap.Modal(document.getElementById('storyViewerModal'));
@@ -339,20 +804,26 @@ function openStoryViewerModal(index = 0) {
 }
 
 function renderCurrentStory() {
+    stopActiveStoryAudio();
+
     const mediaContainer = document.getElementById('storyMediaContent');
     const footerContainer = document.getElementById('storyFooterContent');
     const captionEl = document.getElementById('storyCaptionText');
     const musicEl = document.getElementById('storyMusicText');
     const usernameEl = document.getElementById('viewerUsernameText');
+    const timestampEl = document.getElementById('viewerTimestampText');
 
     const story = userStories[currentStoryIndex];
     if (story) {
         if (usernameEl) {
             usernameEl.innerText = story.author_name || currentLoggedInUserName;
         }
+        if (timestampEl) {
+            timestampEl.innerText = story.created_at ? formatSimpleDate(story.created_at) : 'Just now';
+        }
 
         mediaContainer.innerHTML = '';
-        
+
         mediaContainer.style.aspectRatio = '1 / 1';
         mediaContainer.style.width = '100%';
         mediaContainer.style.maxHeight = '380px';
@@ -379,13 +850,24 @@ function renderCurrentStory() {
         if (story.music_preview_url) {
             const audioEl = document.createElement('audio');
             audioEl.src = story.music_preview_url;
-            audioEl.loop = true;
+            audioEl.loop = false;
             mediaContainer.appendChild(audioEl);
 
             const soundBtn = document.createElement('button');
+            soundBtn.type = 'button';
             soundBtn.className = 'btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center opacity-75 shadow-sm';
             soundBtn.style.cssText = 'width: 34px; height: 34px; background-color: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2); z-index: 10;';
-            soundBtn.onclick = () => toggleFeedAudio(soundBtn);
+            soundBtn.addEventListener('click', () => {
+                const icon = soundBtn.querySelector('i');
+                if (audioEl.paused) {
+                    audioEl.play().then(() => {
+                        if (icon) icon.className = 'bi bi-volume-up-fill text-light';
+                    }).catch(() => {});
+                } else {
+                    audioEl.pause();
+                    if (icon) icon.className = 'bi bi-volume-mute-fill text-light';
+                }
+            });
             soundBtn.innerHTML = '<i class="bi bi-volume-mute-fill text-light" style="font-size: 1rem;"></i>';
             mediaContainer.appendChild(soundBtn);
         }
@@ -404,6 +886,7 @@ function renderCurrentStory() {
 }
 
 function prevStory() {
+    stopActiveStoryAudio();
     if (currentStoryIndex > 0) {
         currentStoryIndex--;
         renderCurrentStory();
@@ -411,6 +894,7 @@ function prevStory() {
 }
 
 function nextStory() {
+    stopActiveStoryAudio();
     if (currentStoryIndex < userStories.length - 1) {
         currentStoryIndex++;
         renderCurrentStory();
@@ -439,6 +923,7 @@ function executeDelete() {
     }
 
     if (deleteTargetType === 'story') {
+        stopActiveStoryAudio();
         const story = userStories[currentStoryIndex];
         if (story && story.id) {
             fetch(`/api/bip/stories/${story.id}`, { method: 'DELETE' })
@@ -473,19 +958,19 @@ function renderServerStories() {
 
     if (userStories.length > 0) {
         const latestStory = userStories[0];
-        
+
         const itemDiv = document.createElement('div');
         itemDiv.className = 'text-center flex-shrink-0';
         itemDiv.id = 'userActiveStoryItem';
         itemDiv.style.cursor = 'pointer';
-        itemDiv.onclick = () => openStoryViewerModal(0);
+        itemDiv.addEventListener('click', () => openStoryViewerModal(0));
 
         const outerCircle = document.createElement('div');
         outerCircle.className = 'position-relative rounded-circle p-1 d-flex align-items-center justify-content-center mx-auto mb-1';
         outerCircle.style.width = '64px';
         outerCircle.style.height = '64px';
         outerCircle.style.border = '2px solid var(--accent-color)';
-        outerCircle.style.background = 'linear-gradient(45deg, var(--accent-color), #00ff66)';
+        outerCircle.style.background = 'var(--accent-color)';
 
         const innerCircle = document.createElement('div');
         innerCircle.className = 'rounded-circle p-0.5 w-100 h-100 overflow-hidden bg-dark d-flex align-items-center justify-content-center';
@@ -521,6 +1006,7 @@ function renderServerStories() {
 
 function renderContent() {
     const feedContainer = document.getElementById('feed-container');
+    stopAllFeedAudio();
 
     if (currentTab === 'activity') {
         feedContainer.innerHTML = '';
@@ -544,7 +1030,7 @@ function renderContent() {
         } else {
             const ul = document.createElement('ul');
             ul.className = 'list-unstyled mb-0 d-flex flex-column gap-3';
-            
+
             userActivities.forEach(act => {
                 const li = document.createElement('li');
                 li.className = 'd-flex align-items-center justify-content-between pb-2 border-bottom border-secondary';
@@ -562,7 +1048,7 @@ function renderContent() {
                 pText.className = 'mb-1 small fw-semibold';
                 pText.style.color = 'var(--text-main)';
                 pText.textContent = act.text;
-                
+
                 const smallTime = document.createElement('small');
                 smallTime.style.cssText = 'font-size: 0.7rem; color: var(--text-main); opacity: 0.7;';
                 smallTime.textContent = act.time;
@@ -577,19 +1063,21 @@ function renderContent() {
 
                 if (act.type === 'follow' || act.type === 'post_ref') {
                     const goBtn = document.createElement('button');
+                    goBtn.type = 'button';
                     goBtn.className = 'btn btn-sm btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm';
                     goBtn.style.cssText = 'width: 28px; height: 28px; border-color: rgba(255, 255, 255, 0.3); color: var(--accent-color);';
                     goBtn.title = 'Go to Activity';
-                    goBtn.onclick = () => navigateToActivity(act);
+                    goBtn.addEventListener('click', () => navigateToActivity(act));
                     goBtn.innerHTML = '<i class="bi bi-box-arrow-up-right fs-6"></i>';
                     rightDiv.appendChild(goBtn);
                 }
 
                 const delBtn = document.createElement('button');
+                delBtn.type = 'button';
                 delBtn.className = 'btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm';
                 delBtn.style.cssText = 'width: 28px; height: 28px; border-color: rgba(220, 53, 69, 0.4);';
                 delBtn.title = 'Delete Activity Item';
-                delBtn.onclick = () => removeActivityItem(act.id);
+                delBtn.addEventListener('click', () => removeActivityItem(act.id));
                 delBtn.innerHTML = '<i class="bi bi-trash fs-6"></i>';
                 rightDiv.appendChild(delBtn);
 
@@ -617,7 +1105,9 @@ function renderContent() {
         return;
     }
 
+    const template = document.getElementById('bipPostCardTemplate');
     feedContainer.innerHTML = '';
+
     postsToRender.forEach(post => {
         const currentId = post.id;
         const authorName = post.author_name && post.author_name !== 'User' ? post.author_name : currentLoggedInUserName;
@@ -625,22 +1115,12 @@ function renderContent() {
         const isSelfPost = authorName === currentLoggedInUserName;
         const isFollowing = followingState[authorName] || false;
         const isLiked = likedState[currentId] || false;
-        const heartIconClass = isLiked ? 'bi-heart-fill text-danger' : 'bi-heart';
 
-        const card = document.createElement('div');
-        card.className = 'card rounded-4 shadow-sm mb-4 border-secondary';
+        const cardFragment = template.content.cloneNode(true);
+        const card = cardFragment.querySelector('.bip-post-card');
         card.id = `postCard${currentId}`;
-        card.style.cssText = 'background-color: var(--bg-card); color: var(--text-main);';
 
-        const header = document.createElement('div');
-        header.className = 'card-header bg-transparent border-0 d-flex align-items-center justify-content-between p-3';
-
-        const headerLeft = document.createElement('div');
-        headerLeft.className = 'd-flex align-items-center gap-3';
-
-        const avatarDiv = document.createElement('div');
-        avatarDiv.className = 'rounded-circle overflow-hidden d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0';
-        avatarDiv.style.cssText = 'width: 42px; height: 42px; border: 1.5px solid var(--accent-color); color: var(--text-main);';
+        const avatarDiv = cardFragment.querySelector('.bip-post-avatar');
         if (userPhotoUrl) {
             const img = document.createElement('img');
             img.src = userPhotoUrl;
@@ -653,22 +1133,14 @@ function renderContent() {
             span.textContent = authorName[0];
             avatarDiv.appendChild(span);
         }
-        headerLeft.appendChild(avatarDiv);
 
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'd-flex flex-column justify-content-center';
-
-        const nameRow = document.createElement('div');
-        nameRow.className = 'd-flex align-items-center gap-2';
-
-        const h6 = document.createElement('h6');
-        h6.className = 'fw-bold mb-0 lh-1';
-        h6.style.cssText = 'font-size: 0.95rem; color: var(--text-main);';
+        const nameRow = cardFragment.querySelector('.bip-post-name-row');
+        const h6 = cardFragment.querySelector('.bip-post-author');
         h6.textContent = authorName;
-        nameRow.appendChild(h6);
 
         if (!isSelfPost) {
             const followBtn = document.createElement('button');
+            followBtn.type = 'button';
             followBtn.className = 'btn btn-sm rounded-pill py-0 px-2 follow-btn';
             followBtn.style.fontSize = '0.7rem';
             if (isFollowing) {
@@ -678,15 +1150,11 @@ function renderContent() {
                 followBtn.style.cssText += 'background-color: transparent; color: var(--accent-color); border-color: var(--accent-color);';
                 followBtn.textContent = 'Follow';
             }
-            followBtn.onclick = () => toggleFollowUser(authorName, followBtn);
+            followBtn.addEventListener('click', () => toggleFollowUser(authorName));
             nameRow.appendChild(followBtn);
         }
-        infoDiv.appendChild(nameRow);
 
-        const metaRow = document.createElement('div');
-        metaRow.className = 'd-flex align-items-center gap-1 mt-1';
-        metaRow.style.cssText = 'font-size: 0.72rem; line-height: 1; color: var(--text-muted);';
-        
+        const metaRow = cardFragment.querySelector('.bip-post-meta');
         const dateSpan = document.createElement('span');
         dateSpan.textContent = formattedDate;
         metaRow.appendChild(dateSpan);
@@ -702,37 +1170,22 @@ function renderContent() {
             musicSpan.innerHTML = '<i class="bi bi-music-note me-1"></i>' + post.music;
             metaRow.appendChild(musicSpan);
         }
-        infoDiv.appendChild(metaRow);
-        headerLeft.appendChild(infoDiv);
-        header.appendChild(headerLeft);
 
-        const dropdown = document.createElement('div');
-        dropdown.className = 'dropdown';
-        dropdown.innerHTML = `
-            <button class="btn btn-sm btn-link p-1 border-0 dropdown-toggle-no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Post Options" style="color: var(--text-main);">
-                <i class="bi bi-three-dots-vertical fs-5" style="color: var(--accent-color) !important;"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-secondary shadow">
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2" href="#" data-bs-toggle="collapse" data-bs-target="#editPost${currentId}">
-                        <i class="bi bi-pencil-square" style="color: var(--accent-color);"></i> Edit Caption
-                    </a>
-                </li>
-                <li><hr class="dropdown-divider border-secondary"></li>
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#" onclick="deletePost('postCard${currentId}')">
-                        <i class="bi bi-trash3-fill"></i> Delete Post
-                    </a>
-                </li>
-            </ul>
-        `;
-        header.appendChild(dropdown);
-        card.appendChild(header);
+        const editCollapse = cardFragment.querySelector('.bip-edit-collapse');
+        editCollapse.id = `editPost${currentId}`;
+        const editLink = cardFragment.querySelector('.bip-edit-caption-link');
+        editLink.setAttribute('data-bs-toggle', 'collapse');
+        editLink.setAttribute('data-bs-target', `#editPost${currentId}`);
 
+        const deleteLink = cardFragment.querySelector('.bip-delete-post-link');
+        deleteLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            deletePost(`postCard${currentId}`);
+        });
+
+        const mediaBox = cardFragment.querySelector('.bip-feed-media-box');
         if (post.media_url) {
-            const mediaBox = document.createElement('div');
-            mediaBox.className = 'position-relative bg-black overflow-hidden w-100';
-            mediaBox.style.aspectRatio = '1 / 1';
+            mediaBox.classList.remove('d-none');
 
             if (post.is_video) {
                 const vid = document.createElement('video');
@@ -740,7 +1193,7 @@ function renderContent() {
                 vid.className = 'w-100 h-100 object-fit-cover position-absolute';
                 vid.style.cssText = 'top:0; left:0;';
                 vid.controls = true;
-                vid.muted = post.is_muted;
+                vid.muted = true;
                 mediaBox.appendChild(vid);
             } else {
                 const img = document.createElement('img');
@@ -750,102 +1203,84 @@ function renderContent() {
                 mediaBox.appendChild(img);
             }
 
-            if (post.music_preview_url) {
-                const audioEl = document.createElement('audio');
-                audioEl.src = post.music_preview_url;
-                audioEl.loop = true;
-                mediaBox.appendChild(audioEl);
+            if (post.music_preview_url || post.is_video) {
+                if (post.music_preview_url) {
+                    const audioEl = document.createElement('audio');
+                    audioEl.src = post.music_preview_url;
+                    audioEl.loop = true;
+                    mediaBox.appendChild(audioEl);
+                }
 
                 const soundBtn = document.createElement('button');
-                soundBtn.className = 'btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center opacity-75 shadow-sm';
+                soundBtn.type = 'button';
+                soundBtn.className = 'btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center opacity-75 shadow-sm bip-feed-audio-btn';
                 soundBtn.style.cssText = 'width: 34px; height: 34px; background-color: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2); z-index: 10;';
-                soundBtn.onclick = () => toggleFeedAudio(soundBtn);
-                soundBtn.innerHTML = '<i class="bi bi-volume-mute-fill text-light" style="font-size: 1rem;"></i>';
+                soundBtn.addEventListener('click', () => toggleFeedAudio(soundBtn));
+                soundBtn.innerHTML = `<i class="bi ${feedAudioEnabled ? 'bi-volume-up-fill' : 'bi-volume-mute-fill'} text-light" style="font-size: 1rem;"></i>`;
                 mediaBox.appendChild(soundBtn);
             }
-
-            card.appendChild(mediaBox);
         }
 
-        const cardBody = document.createElement('div');
-        cardBody.className = 'card-body py-3';
+        const likeBtn = cardFragment.querySelector('.bip-like-btn');
+        const likeIcon = likeBtn.querySelector('i');
+        likeIcon.className = isLiked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
+        likeBtn.addEventListener('click', () => toggleLikePost(currentId, authorName));
 
-        const actionsRow = document.createElement('div');
-        actionsRow.className = 'd-flex align-items-center gap-3 mb-2';
-        actionsRow.innerHTML = `
-            <button class="btn btn-sm p-0 d-flex align-items-center gap-1 fs-5" style="color: inherit;" onclick="toggleLikePost(${currentId}, '${authorName}', this)">
-                <i class="bi ${heartIconClass}"></i>
-            </button>
-            <button class="btn btn-sm p-0 d-flex align-items-center gap-1 fs-5" style="color: var(--accent-color) !important;" data-bs-toggle="collapse" data-bs-target="#commentsPost${currentId}">
-                <i class="bi bi-chat"></i>
-            </button>
-            <button class="btn btn-sm p-0 ms-auto fs-5" style="color: var(--text-main);">
-                <i class="bi bi-bookmark"></i>
-            </button>
-        `;
-        cardBody.appendChild(actionsRow);
+        const commentsCollapse = cardFragment.querySelector('.bip-comments-collapse');
+        commentsCollapse.id = `commentsPost${currentId}`;
+        const commentToggleBtn = cardFragment.querySelector('.bip-comment-toggle-btn');
+        commentToggleBtn.setAttribute('data-bs-toggle', 'collapse');
+        commentToggleBtn.setAttribute('data-bs-target', `#commentsPost${currentId}`);
 
-        const likesCount = document.createElement('div');
-        likesCount.className = 'fw-bold mb-1';
-        likesCount.style.cssText = 'font-size: 0.85rem; color: var(--accent-color);';
-        likesCount.textContent = '0 likes';
-        cardBody.appendChild(likesCount);
-
-        const captionP = document.createElement('p');
-        captionP.className = 'card-text mb-2';
+        const captionP = cardFragment.querySelector('.bip-caption-text');
         captionP.id = `captionText${currentId}`;
-        captionP.style.fontSize = '0.95rem';
         if (post.caption) {
             captionP.innerHTML = `<strong class="me-1" style="color: var(--text-main);">${authorName}</strong><span id="captionContent${currentId}">${post.caption}</span>`;
         } else {
             captionP.style.display = 'none';
         }
-        cardBody.appendChild(captionP);
 
-        const editCollapse = document.createElement('div');
-        editCollapse.className = 'collapse pt-2 mt-2 border-top border-secondary';
-        editCollapse.id = `editPost${currentId}`;
-        editCollapse.innerHTML = `
-            <label class="form-label small mb-1" style="color: var(--text-muted);">Edit Caption</label>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control text-light border-secondary" id="editInput${currentId}" value="${post.caption || ''}" style="background-color: rgba(0,0,0,0.4) !important; font-size: 0.85rem; color: var(--text-main) !important;">
-                <button class="btn btn-outline-secondary" type="button" onclick="const val = document.getElementById('editInput${currentId}').value; const el = document.getElementById('captionText${currentId}'); el.style.display='block'; el.innerHTML = '<strong class=\\'me-1\\' style=\\'color: var(--text-main);\\'>${authorName}</strong>' + val; bootstrap.Collapse.getInstance(document.getElementById('editPost${currentId}')).hide();" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">Save</button>
-            </div>
-        `;
-        cardBody.appendChild(editCollapse);
-
-        let commentsListHtml = '';
-        const postCommentsArr = (window.postComments && window.postComments[currentId]) ? window.postComments[currentId] : [];
-        postCommentsArr.forEach(c => {
-            commentsListHtml += `
-                <div class="d-flex justify-content-between align-items-start mb-1 small">
-                    <div><strong style="color: var(--accent-color);" class="me-1">${c.author}</strong><span style="color: var(--text-main);">${c.text}</span></div>
-                    <span style="font-size: 0.65rem; color: var(--text-muted);">${c.time}</span>
-                </div>
-            `;
+        const editInput = cardFragment.querySelector('.bip-edit-input');
+        editInput.value = post.caption || '';
+        const saveEditBtn = cardFragment.querySelector('.bip-save-edit-btn');
+        saveEditBtn.addEventListener('click', () => {
+            const val = editInput.value;
+            captionP.style.display = 'block';
+            captionP.innerHTML = `<strong class="me-1" style="color: var(--text-main);">${authorName}</strong>` + val;
+            const inst = bootstrap.Collapse.getInstance(editCollapse);
+            if (inst) inst.hide();
         });
 
-        const commentsCollapse = document.createElement('div');
-        commentsCollapse.className = 'collapse pt-2 mt-2 border-top border-secondary';
-        commentsCollapse.id = `commentsPost${currentId}`;
-        commentsCollapse.innerHTML = `
-            <div class="mb-2 comments-container" style="max-height: 150px; overflow-y: auto;">
-                ${commentsListHtml || '<small class="text-muted">No comments yet. Be the first to comment!</small>'}
-            </div>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control text-light border-secondary" id="commentInput${currentId}" placeholder="Add a comment..." style="background-color: rgba(0,0,0,0.4) !important; font-size: 0.85rem; color: var(--text-main) !important;">
-                <button class="btn btn-outline-secondary" type="button" onclick="addComment(${currentId}, '${authorName}', document.getElementById('commentInput${currentId}'))" style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);"><i class="bi bi-send"></i></button>
-            </div>
-        `;
-        cardBody.appendChild(commentsCollapse);
+        const commentsListEl = cardFragment.querySelector('.bip-comments-list');
+        const postCommentsArr = (window.postComments && window.postComments[currentId]) ? window.postComments[currentId] : [];
+        if (postCommentsArr.length === 0) {
+            commentsListEl.innerHTML = '<small class="text-muted">No comments yet. Be the first to comment!</small>';
+        } else {
+            postCommentsArr.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'd-flex justify-content-between align-items-start mb-1 small';
+                row.innerHTML = `<div><strong style="color: var(--accent-color);" class="me-1">${c.author}</strong><span style="color: var(--text-main);">${c.text}</span></div><span style="font-size: 0.65rem; color: var(--text-muted);">${c.time}</span>`;
+                commentsListEl.appendChild(row);
+            });
+        }
 
-        card.appendChild(cardBody);
-        feedContainer.appendChild(card);
+        const commentInput = cardFragment.querySelector('.bip-comment-input');
+        const commentSubmitBtn = cardFragment.querySelector('.bip-comment-submit-btn');
+        commentSubmitBtn.addEventListener('click', () => addComment(currentId, authorName, commentInput));
+
+        feedContainer.appendChild(cardFragment);
     });
+
+    initFeedScrollAudioObserver();
 }
 
 function handlePostSubmit(e) {
     e.preventDefault();
+
+    if (isSubmittingPost) {
+        return;
+    }
+
     const isStoryMode = document.getElementById('modalHeaderTitle').innerText.includes('Story');
 
     if (!uploadedFileObject) {
@@ -858,6 +1293,13 @@ function handlePostSubmit(e) {
     const music = selectedMusicTrack;
     const musicPreviewUrl = selectedMusicPreviewUrl;
     const isMuted = document.getElementById('muteVideoSwitch').checked;
+
+    const submissionKey = `${isStoryMode ? 'story' : 'post'}:${uploadedFileObject.name}:${uploadedFileObject.size}:${caption.trim()}:${music}`;
+    if (activeSubmissionKey === submissionKey) {
+        return;
+    }
+    activeSubmissionKey = submissionKey;
+    setPostingState(true, isStoryMode ? 'Posting story...' : 'Posting publication...');
 
     if (isVideoMedia) {
         const formData = new FormData();
@@ -878,14 +1320,29 @@ function handlePostSubmit(e) {
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const scale = zoomLevel / 100;
-            const previewWidth = document.getElementById('previewContainer').clientWidth || 360;
+            const previewContainer = document.getElementById('previewContainer');
+            const previewW = (previewContainer && previewContainer.clientWidth) ? previewContainer.clientWidth : 360;
+            const previewH = (previewContainer && previewContainer.clientHeight) ? previewContainer.clientHeight : 360;
 
-            const baseSize = Math.max(canvas.width, canvas.height) * scale;
-            const offsetX = (canvas.width - baseSize) / 2 + (panX * (canvas.width / previewWidth));
-            const offsetY = (canvas.height - baseSize) / 2 + (panY * (canvas.height / previewWidth));
+            clampPanOffsets(img.naturalWidth || canvas.width, img.naturalHeight || canvas.height, previewW, previewH);
 
-            ctx.drawImage(img, offsetX, offsetY, baseSize, baseSize);
+            const ratioX = canvas.width / previewW;
+            const ratioY = canvas.height / previewH;
+
+            const zoomScale = zoomLevel / 100;
+            const { drawW, drawH, centerX, centerY } = computeCoverDimensions(
+                img.naturalWidth || canvas.width,
+                img.naturalHeight || canvas.height,
+                canvas.width,
+                canvas.height
+            );
+
+            const finalW = drawW * zoomScale;
+            const finalH = drawH * zoomScale;
+            const finalX = centerX + (drawW * (1 - zoomScale)) / 2 + (panX * ratioX);
+            const finalY = centerY + (drawH * (1 - zoomScale)) / 2 + (panY * ratioY);
+
+            ctx.drawImage(img, finalX, finalY, finalW, finalH);
 
             canvas.toBlob((blob) => {
                 const croppedFile = new File([blob], uploadedFileObject.name, { type: 'image/jpeg' });
@@ -897,6 +1354,9 @@ function handlePostSubmit(e) {
                 formData.append('is_muted', isMuted);
                 sendPostData(formData, isStoryMode);
             }, 'image/jpeg', 0.92);
+        };
+        img.onerror = () => {
+            setPostingState(false);
         };
     }
 }
@@ -920,10 +1380,12 @@ function sendPostData(formData, isStoryMode) {
                 userActivities.unshift({ id: Date.now(), type: 'general', text: `Created a new publication`, time: 'Just now' });
                 renderContent();
             }
+            stopPreviewAudio();
             document.getElementById('postForm').reset();
             document.getElementById('musicSearchInput').value = '';
             selectedMusicTrack = "";
             selectedMusicPreviewUrl = "";
+            syncPreviewAudioButton();
             document.getElementById('previewContainer').textContent = 'No photo or video selected';
             document.getElementById('previewCaption').textContent = '';
             document.getElementById('previewMusic').textContent = 'Preview Mode';
@@ -932,12 +1394,18 @@ function sendPostData(formData, isStoryMode) {
             uploadedMediaUrl = null;
             uploadedFileObject = null;
             isVideoMedia = false;
-            
+
             const modalEl = document.getElementById('createPostModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             if (modalInstance) {
                 modalInstance.hide();
             }
         }
+    })
+    .catch(err => {
+        console.error('Error submitting post/story:', err);
+    })
+    .finally(() => {
+        setPostingState(false);
     });
 }

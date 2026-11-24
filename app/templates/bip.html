@@ -8,12 +8,12 @@
     window.userProfilePhotoUrl = "{% if user_profile_photo %}{{ url_for('static', filename='uploads/profile_photos/' + user_profile_photo) }}{% else %}{% endif %}";
 </script>
 
-<div class="row justify-content-center pb-5 mb-0">
+<div class="row justify-content-center pb-5 mb-2">
     <div class="col-lg-6 col-md-8">
 
         <div class="d-flex overflow-auto py-3 px-2 mb-4 rounded-4 shadow-sm align-items-center gap-3 no-scrollbar"
             id="stories-bar" style="background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.08);">
-            <div class="text-center flex-shrink-0" style="cursor: pointer;" onclick="openStoryModal()">
+            <div class="text-center flex-shrink-0" id="addStoryTrigger" style="cursor: pointer;">
                 <div class="position-relative rounded-circle p-1 d-flex align-items-center justify-content-center mx-auto mb-1"
                     style="width: 64px; height: 64px; border: 2px dashed var(--accent-color);">
                     {% if user_profile_photo %}
@@ -44,31 +44,37 @@
     </div>
 </div>
 
-<div class="fixed-bottom pointer-events-none" style="bottom: 80px; z-index: 1030;">
+<div id="bipPostingStatusBanner" class="bip-posting-toast d-none" role="status" aria-live="polite">
+    <span class="spinner-border spinner-border-sm" style="color: var(--accent-color); width: 0.85rem; height: 0.85rem;" aria-hidden="true"></span>
+    <span id="bipPostingStatusText">Posting...</span>
+</div>
+
+<div id="bipBottomNav" class="bip-bottom-nav">
     <div class="container d-flex justify-content-center">
-        <div class="d-flex align-items-center gap-3 p-2 rounded-pill shadow-lg pointer-events-auto"
-            style="background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);">
-            <button
+        <div class="d-flex align-items-center gap-3 p-2 rounded-pill shadow-lg"
+            style="background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); pointer-events: auto;">
+            <button type="button" id="navHomeBtn"
                 class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
                 style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
-                onclick="switchTab('home')" title="All Feed Posts">
+                title="All Feed Posts">
                 <i class="bi bi-house-door-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
-            <button
+            <button type="button" id="navFollowingBtn"
                 class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
                 style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
-                onclick="switchTab('following')" title="Following Posts & Stories">
+                title="Following Posts & Stories">
                 <i class="bi bi-people-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
-            <button class="btn rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm"
+            <button type="button" id="navCreatePostBtn"
+                class="btn rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm"
                 style="width: 50px; height: 50px; background-color: var(--accent-color); border: none;"
-                onclick="openFeedModal()" title="Create Feed Post">
+                title="Create Feed Post">
                 <i class="bi bi-plus-lg fs-4 text-dark fw-bold"></i>
             </button>
-            <button
+            <button type="button" id="navActivityBtn"
                 class="btn rounded-circle d-flex align-items-center justify-content-center p-0 text-decoration-none shadow-sm"
                 style="width: 44px; height: 44px; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"
-                onclick="switchTab('activity')" title="My Activity & Interactions">
+                title="My Activity & Interactions">
                 <i class="bi bi-person-fill fs-5" style="color: var(--accent-color);"></i>
             </button>
         </div>
@@ -86,63 +92,65 @@
                     aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="postForm" onsubmit="handlePostSubmit(event)">
+                <form id="postForm">
                     <div class="row">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0 d-flex flex-column">
+                            <div class="mb-3 order-1">
                                 <label for="mediaInput" class="form-label small fw-semibold"
                                     style="color: var(--text-main);"><i class="bi bi-film me-1"
                                         style="color: var(--accent-color);"></i> Attach Photo or Video <span
                                         class="text-danger">*</span></label>
                                 <input type="file" class="form-control text-light border-secondary" id="mediaInput"
-                                    name="media_file" accept="image/*,video/*" onchange="previewMedia(event)"
+                                    name="media_file" accept="image/*,video/*"
                                     style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
                             </div>
-                            <div class="mb-3 d-none" id="cropControls">
-                                <label class="form-label small d-flex align-items-center justify-content-between"
-                                    style="color: var(--text-main);">
-                                    <span><i class="bi bi-arrows-move me-1" style="color: var(--accent-color);"></i>
-                                        Adjust Position & Zoom</span>
-                                    <span id="zoomVal" style="color: var(--accent-color);">100%</span>
-                                </label>
-                                <input type="range" class="form-range" id="zoomRange" min="100" max="250" value="100"
-                                    oninput="applyMediaTransform()">
-                                <small class="d-block" style="font-size: 0.72rem; color: var(--text-muted);"><i
-                                        class="bi bi-info-circle me-1"></i> Drag media in the preview box to
-                                    reposition.</small>
-                            </div>
-                            <div class="mb-3 d-none" id="muteVideoOption">
+
+                            <div class="mb-3 d-none order-2" id="muteVideoOption">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="muteVideoSwitch" checked
-                                        onchange="toggleVideoMute()">
+                                    <input class="form-check-input" type="checkbox" id="muteVideoSwitch" checked>
                                     <label class="form-check-label small" for="muteVideoSwitch"
                                         style="color: var(--text-main);"><i class="bi bi-volume-mute me-1"></i> Mute
                                         original video audio</label>
                                 </div>
                             </div>
-                            <div class="mb-3 position-relative">
+
+                            <div class="mb-3 position-relative order-3">
                                 <label for="musicSearchInput" class="form-label small fw-semibold"
                                     style="color: var(--text-main);"><i class="bi bi-music-note-beamed me-1"
                                         style="color: var(--accent-color);"></i> Search Song / Famous Artist</label>
                                 <input type="text" class="form-control text-light border-secondary"
                                     id="musicSearchInput"
                                     placeholder="Type song or artist (e.g., The Weeknd - Blinding Lights)"
-                                    oninput="searchMusicTracks(this.value)" autocomplete="off"
+                                    autocomplete="off"
                                     style="background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;">
                                 <div id="musicSearchResults"
                                     class="list-group position-absolute w-100 shadow-lg d-none z-3 mt-1"
                                     style="max-height: 180px; overflow-y: auto;"></div>
                             </div>
-                            <div class="mb-3">
+
+                            <div class="mb-3 d-none order-5 order-md-4" id="cropControls">
+                                <label class="form-label small d-flex align-items-center justify-content-between"
+                                    style="color: var(--text-main);">
+                                    <span><i class="bi bi-arrows-move me-1" style="color: var(--accent-color);"></i>
+                                        Adjust Position & Zoom</span>
+                                    <span id="zoomVal" style="color: var(--accent-color);">100%</span>
+                                </label>
+                                <input type="range" class="form-range" id="zoomRange" min="100" max="250" value="100">
+                                <small class="d-block" style="font-size: 0.72rem; color: var(--text-muted);"><i
+                                        class="bi bi-info-circle me-1"></i> Drag media in the preview box to
+                                    reposition.</small>
+                            </div>
+
+                            <div class="mb-3 order-4 order-md-5">
                                 <label for="captionInput" class="form-label small fw-semibold"
                                     style="color: var(--text-main);">Caption / Thoughts</label>
                                 <textarea class="form-control text-light border-secondary" id="captionInput"
                                     name="caption" rows="3"
                                     placeholder="What's on your mind regarding your fitness journey?"
-                                    style="resize: none; background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;"
-                                    oninput="updatePreview()"></textarea>
+                                    style="resize: none; background-color: rgba(0,0,0,0.4) !important; color: var(--text-main) !important;"></textarea>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <span class="d-block small mb-2 text-uppercase fw-bold"
                                 style="font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Live
@@ -171,12 +179,19 @@
                                                 Mode</small>
                                         </div>
                                     </div>
+                                    <button type="button" id="previewAudioBtn"
+                                        class="btn btn-sm btn-outline-secondary rounded-circle p-0 d-none align-items-center justify-content-center"
+                                        style="width: 28px; height: 28px; border-color: rgba(148, 163, 184, 0.35); color: var(--accent-color);"
+                                        title="Toggle Preview Audio">
+                                        <i class="bi bi-volume-mute-fill" style="font-size: 0.85rem;"></i>
+                                    </button>
                                 </div>
                                 <div id="previewContainer"
                                     class="bg-black d-flex align-items-center justify-content-center overflow-hidden position-relative w-100"
-                                    style="aspect-ratio: 1 / 1; font-size: 0.8rem; cursor: grab; color: var(--text-muted);">
+                                    style="aspect-ratio: 1 / 1; font-size: 0.8rem; cursor: grab; touch-action: none; color: var(--text-muted);">
                                     No photo or video selected
                                 </div>
+                                <audio id="previewAudioPlayer" preload="none"></audio>
                                 <div class="p-2">
                                     <div class="d-flex gap-2 mb-1" style="font-size: 0.9rem; color: var(--text-muted);">
                                         <i class="bi bi-heart"></i>
@@ -200,12 +215,12 @@
     </div>
 </div>
 
-<div class="modal fade" id="storyViewerModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade bip-story-backdrop" id="storyViewerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
         <div class="modal-content bg-black text-light border-0 shadow-lg position-relative rounded-4 overflow-hidden"
             style="width: 380px; height: 600px; margin: auto;">
             <div class="position-absolute top-0 start-0 end-0 p-3 z-3"
-                style="background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);">
+                style="background: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="d-flex align-items-center gap-2">
                         <div class="rounded-circle overflow-hidden border border-light"
@@ -224,7 +239,7 @@
                         </div>
                         <span class="fw-bold small text-light" id="viewerUsernameText">{{ user_name if user_name and
                             user_name != "User" else "Marcelo Stobbe" }}</span>
-                        <span class="text-muted small" style="font-size: 0.7rem;">Just now</span>
+                        <span class="small bip-story-date" id="viewerTimestampText" style="font-size: 0.72rem;">Just now</span>
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <div class="dropdown">
@@ -234,8 +249,8 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow border-secondary">
                                 <li>
-                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2"
-                                        onclick="confirmDeleteStory()">
+                                    <button type="button" id="deleteStoryOptionBtn"
+                                        class="dropdown-item text-danger d-flex align-items-center gap-2">
                                         <i class="bi bi-trash"></i> Delete Story
                                     </button>
                                 </li>
@@ -259,14 +274,14 @@
                     <div id="storyMusicText" class="small"
                         style="font-size: 0.7rem; color: var(--accent-color) !important;"></div>
                 </div>
-                <button
+                <button type="button" id="prevStoryBtn"
                     class="btn position-absolute start-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle ms-2 d-flex align-items-center justify-content-center z-3"
-                    style="width: 40px; height: 40px; border: none;" onclick="prevStory()" title="Previous Story">
+                    style="width: 40px; height: 40px; border: none;" title="Previous Story">
                     <i class="bi bi-chevron-left fs-5"></i>
                 </button>
-                <button
+                <button type="button" id="nextStoryBtn"
                     class="btn position-absolute end-0 top-50 translate-middle-y text-light bg-dark bg-opacity-50 rounded-circle me-2 d-flex align-items-center justify-content-center z-3"
-                    style="width: 40px; height: 40px; border: none;" onclick="nextStory()" title="Next Story">
+                    style="width: 40px; height: 40px; border: none;" title="Next Story">
                     <i class="bi bi-chevron-right fs-5"></i>
                 </button>
             </div>
@@ -289,7 +304,7 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm w-50 rounded-pill py-2 border-secondary"
                     data-bs-dismiss="modal" style="color: var(--text-main) !important;">Cancel</button>
                 <button type="button" id="confirmDeleteBtn" class="btn btn-sm w-50 rounded-pill py-2 fw-bold text-dark"
-                    style="background-color: var(--accent-color);" onclick="executeDelete()">Delete</button>
+                    style="background-color: var(--accent-color);">Delete</button>
             </div>
         </div>
     </div>
@@ -311,6 +326,93 @@
         </div>
     </div>
 </div>
+
+<template id="bipPostCardTemplate">
+    <div class="card rounded-4 shadow-sm mb-4 border-secondary bip-post-card"
+        style="background-color: var(--bg-card); color: var(--text-main);">
+        <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0 bip-post-avatar"
+                    style="width: 42px; height: 42px; border: 1.5px solid var(--accent-color); color: var(--text-main);"></div>
+                <div class="d-flex flex-column justify-content-center">
+                    <div class="d-flex align-items-center gap-2 bip-post-name-row">
+                        <h6 class="fw-bold mb-0 lh-1 bip-post-author"
+                            style="font-size: 0.95rem; color: var(--text-main);"></h6>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 mt-1 bip-post-meta"
+                        style="font-size: 0.72rem; line-height: 1; color: var(--text-muted);"></div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button type="button"
+                    class="btn btn-sm btn-link p-1 border-0 dropdown-toggle-no-caret"
+                    data-bs-toggle="dropdown" aria-expanded="false" title="Post Options"
+                    style="color: var(--text-main);">
+                    <i class="bi bi-three-dots-vertical fs-5" style="color: var(--accent-color) !important;"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-secondary shadow">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 bip-edit-caption-link" href="#">
+                            <i class="bi bi-pencil-square" style="color: var(--accent-color);"></i> Edit Caption
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 text-danger bip-delete-post-link" href="#">
+                            <i class="bi bi-trash3-fill"></i> Delete Post
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="position-relative bg-black overflow-hidden w-100 bip-feed-media-box d-none"
+            style="aspect-ratio: 1 / 1;"></div>
+
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <button type="button" class="btn btn-sm p-0 d-flex align-items-center gap-1 fs-5 bip-like-btn"
+                    style="color: inherit;">
+                    <i class="bi bi-heart"></i>
+                </button>
+                <button type="button" class="btn btn-sm p-0 d-flex align-items-center gap-1 fs-5 bip-comment-toggle-btn"
+                    style="color: var(--accent-color) !important;">
+                    <i class="bi bi-chat"></i>
+                </button>
+                <button type="button" class="btn btn-sm p-0 ms-auto fs-5" style="color: var(--text-main);">
+                    <i class="bi bi-bookmark"></i>
+                </button>
+            </div>
+
+            <div class="fw-bold mb-1" style="font-size: 0.85rem; color: var(--accent-color);">0 likes</div>
+
+            <p class="card-text mb-2 bip-caption-text" style="font-size: 0.95rem;"></p>
+
+            <div class="collapse pt-2 mt-2 border-top border-secondary bip-edit-collapse">
+                <label class="form-label small mb-1" style="color: var(--text-muted);">Edit Caption</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control text-light border-secondary bip-edit-input"
+                        style="background-color: rgba(0,0,0,0.4) !important; font-size: 0.85rem; color: var(--text-main) !important;">
+                    <button type="button" class="btn btn-outline-secondary bip-save-edit-btn"
+                        style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">Save</button>
+                </div>
+            </div>
+
+            <div class="collapse pt-2 mt-2 border-top border-secondary bip-comments-collapse">
+                <div class="mb-2 comments-container bip-comments-list" style="max-height: 150px; overflow-y: auto;"></div>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control text-light border-secondary bip-comment-input"
+                        placeholder="Add a comment..."
+                        style="background-color: rgba(0,0,0,0.4) !important; font-size: 0.85rem; color: var(--text-main) !important;">
+                    <button type="button" class="btn btn-outline-secondary bip-comment-submit-btn"
+                        style="border-color: rgba(255,255,255,0.2); color: var(--accent-color);">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <script src="{{ url_for('static', filename='js/bip.js') }}"></script>
 {% endblock %}
