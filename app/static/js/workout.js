@@ -263,6 +263,7 @@ function isCustomExercise(exerciseName) {
 }
 
 function openExerciseMedia(exerciseName) {
+    const modalEl = document.getElementById('exerciseMediaModal');
     const modalTitle = document.getElementById('exerciseMediaModalTitle');
     const modalBody = document.getElementById('exerciseMediaModalBody');
     const modalFooter = document.getElementById('exerciseMediaModalFooter');
@@ -281,14 +282,20 @@ function openExerciseMedia(exerciseName) {
             { suffix: 'peak', maxH: '220px' }
         ];
 
+        const baseName = exerciseName.toLowerCase();
+
         variants.forEach(v => {
+            const fileName = `${baseName} ${v.suffix}.webp`;
             const img = document.createElement('img');
-            img.src = `/static/img/flat/${exerciseName} ${v.suffix}.webp`;
+            img.src = `/static/img/flat/${encodeURIComponent(fileName)}`;
             img.alt = `${exerciseName} ${v.suffix}`;
             img.className = 'img-fluid rounded-3 shadow d-none';
             img.style.maxHeight = v.maxH;
             img.style.objectFit = 'contain';
-            img.addEventListener('error', () => img.classList.add('d-none'));
+            img.addEventListener('error', () => {
+                console.warn('Imagem não encontrada:', img.src);
+                img.classList.add('d-none');
+            });
             img.addEventListener('load', () => img.classList.remove('d-none'));
             listEl.appendChild(img);
         });
@@ -297,9 +304,9 @@ function openExerciseMedia(exerciseName) {
         modalFooter.innerHTML = '';
         modalFooter.style.display = 'none';
     } else {
-        let mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
-        let exMedia = mediaData[exerciseName] || {};
-        let currentVal = exMedia['photo'] || '';
+        const mediaData = JSON.parse(localStorage.getItem('bip_exercise_media') || '{}');
+        const exMedia = mediaData[exerciseName] || {};
+        const currentVal = exMedia['photo'] || '';
 
         if (currentVal) {
             const view = cloneTemplate('tplCustomMediaView');
@@ -316,7 +323,7 @@ function openExerciseMedia(exerciseName) {
         }
     }
 
-    const modalObj = new bootstrap.Modal(document.getElementById('exerciseMediaModal'));
+    const modalObj = bootstrap.Modal.getOrCreateInstance(modalEl);
     modalObj.show();
 }
 
